@@ -5,6 +5,15 @@
   <title>홈</title>
 </head>
 <body>
-  <button onclick="location.href='/start'">크롤링시작</button>
+  <h1>크롤링</h1>
+  <form action="/start" method="get">
+    <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
+    <label>끝페이지</label><input type="number" min="1" max="99999" name="endPage" placeholder="" required>
+    <button type="submit">크롤링 시작</button>
+  </form>
+  <hr>
+  <button onclick="location.href='/embed'">임베딩</button>
+  <button onclick="location.href='/embed-loop'">임베딩루프</button>
+
 </body>
 </html>

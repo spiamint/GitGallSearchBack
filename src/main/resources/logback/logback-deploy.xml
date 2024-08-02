@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- EB 의 EC2 인스턴스 내부 경로-->
+    <property name="LOG_DIR" value="/var/log/board/" />
+
+    <!-- CONSOLE 콘솔 로그 -->
+    <!-- 배포용은 컬러링 X, SSS 를 제외한 시간이 기본으로 찍혀서 시간생략. -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                CO %-5level [%.7thread]: %30logger{1}- %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+
+    <!-- SYSLOG 전체 파일 로그-->
+    <appender name="SYSLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}syslog.log</file>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                SY %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread]: %30logger{1}- %msg%n
+            </Pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}syslog.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- APPLOG 애플리케이션 파일 로그 -->
+    <appender name="APPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}applog.log</file>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                AP %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%.7thread]: %30logger{1}- %msg%n
+            </Pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}applog.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ERRORLOG 에러 파일 로그-->
+    <appender name="ERRORLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--LOG LEVEL FILTER, if ERROR true -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <OnMatch>ACCEPT</OnMatch>
+            <OnMismatch>DENY</OnMismatch>
+        </filter>
+        <!-- 작성할 파일 -->
+        <file>${LOG_DIR}errlog.log</file>
+        <!-- 로그 작성 (encoder)-->
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                ER %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread]: %30logger{1} %n [message] - %msg%n
+            </Pattern>
+        </layout>
+        <!-- 새 파일 작성 정책 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}errlog.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- SQLLOG 파일 로그, 사용X -->
+    <appender name="SQLLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}sqllog.log</file>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                SQ %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread]: %30logger{1}- %msg%n
+            </Pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}sqllog.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!--
+        출력              logger               비고
+        콘솔            : hello.board          EB에서 stdout 으로 자동파일 출력
+        syslog.log      : root                 root 로거에 의한 모든 로그 수집
+        applog.log      : hello.board          stdout 과 동일
+        errorlog.log    : root
+        sqllog.log      : jdbc.sqltiming        사용X
+
+        root.CONSOLE 주석하면 hello.board.CONSOLE, jdbc.sqltiming.CONSOLE 켜줘야 됨. 반대역시 동일
+    -->
+
+    <root level="info">
+        <!--        <appender-ref ref="CONSOLE" />-->
+        <appender-ref ref="SYSLOG" />
+        <appender-ref ref="ERRORLOG"/>
+    </root>
+
+    <logger name="hello.board" level="info">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="APPLOG"/>
+    </logger>
+
+    <logger name="jdbc.sqltiming" level="info">
+        <appender-ref ref="CONSOLE" />
+<!--        <appender-ref ref="SQLLOG" />-->
+    </logger>
+
+    <!-- jdbc 관련 로그 다켜져서 일단 끔 -->
+    <logger name="jdbc.sqlonly" level="off"/>
+    <logger name="jdbc.audit" level="off" />
+    <logger name="jdbc.resultset" level="off" />
+    <logger name="jdbc.resultsettable" level="off" />
+    <logger name="jdbc.connection" level="off" />
+
+</configuration>

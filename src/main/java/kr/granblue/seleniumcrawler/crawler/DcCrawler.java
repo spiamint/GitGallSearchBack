@@ -1,7 +1,11 @@
 package kr.granblue.seleniumcrawler.crawler;
 
-import kr.granblue.seleniumcrawler.domain.Board;
+import kr.granblue.seleniumcrawler.domain.DcBoard;
+import kr.granblue.seleniumcrawler.domain.enums.SourceType;
 import kr.granblue.seleniumcrawler.driver.WebDriverUtil;
+import kr.granblue.seleniumcrawler.service.DcBoardEmbeddingService;
+import kr.granblue.seleniumcrawler.service.DcBoardService;
+import kr.granblue.seleniumcrawler.util.ContentCleaner;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,14 +13,17 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.springframework.ai.embedding.EmbeddingClient;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 @Slf4j
@@ -27,42 +34,57 @@ public class DcCrawler {
     private WebDriver webDriver; // chromeDriver from WebDriverUtil
     private final EmbeddingClient embeddingClient;
 
+    private final DcBoardService dcBoardService;
 
-    public void crawlStart() {
+
+    public void crawlStart(long startPage, long endPage) {
+        log.info("=====[CRAWL START]=====");
+        // 시간 확인
         LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime endTime = LocalDateTime.now().plusYears(1);
-        log.info("crawl start");
-
+        LocalDateTime endTime;
+        // 크롤링할 시작, 끝 페이지
+        Long pageNum = startPage;
+        Long maxPageNum = endPage;
+        // 크롤링할 url, 가변 uri
         String baseUrl = "http://gall.dcinside.com";
-        String appendUri = "/board/lists/?id=granblue&page=1";
-        String executeUrl = baseUrl + appendUri;
-        List<Board> boards = new ArrayList<>();
+        String appendUri = "/board/lists/?id=granblue&page=";
+        // 카운터
+        Long devCounter = 1L; // 개발용 단건 카운트 컷 1부터 N 까지 N 회
+        Long crawledBoardCounter = 0L;
+        Long savedBoardCounter = 0L;
+        Long savedEmbeddingCounter = 0L;
+        // 저장할 디씨글 리스트와 비동기 작업 리스트
+        List<DcBoard> dcBoardsForSave = new ArrayList<>();
+        List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
 
+        // 크롬 드라이버 획득
         webDriver = WebDriverUtil.getChromeDriver();
-        Long pageNum = 1L;
-        Long maxPageNum = 1L;
 
         while (pageNum <= maxPageNum) {
             // 글 리스트 페이지 접속
+            String executeUrl = baseUrl + appendUri + pageNum;
             try {
+                log.info("opening list executeUrl = {}", executeUrl);
                 webDriver.get(executeUrl);
-                log.info("opened list executeUrl = {}", executeUrl);
-                Thread.sleep(1500);
+            } catch (TimeoutException e) {
+                log.error("[ERROR] webDriver.get(executeUrl);  executeUrl = {} TIMEOUT", executeUrl);
+                continue; // 실패 시 페이지 변화없이 재로드
             } catch (Exception e) {
                 log.error("[ERROR] webDriver.get(executeUrl); Thread.sleep() executeUrl = {} e = {}", executeUrl, e);
-                continue; // 실패 시 페이지 변화없이 재로드
+                break;
             }
 
             // 글 리스트 획득
             String listPageSource = webDriver.getPageSource();
-            Document listDocument = Jsoup.parse(listPageSource);
-            Elements listElements = listDocument.select(".ub-content");
-//            log.info("listElements = {}", listElements);
-            
-            for (Element element : listElements) {
-                
+            Document dcBoardListPageHtml = Jsoup.parse(listPageSource);
+            Elements dcBoardListHtml = dcBoardListPageHtml.select(".ub-content");
+//            log.info("dcBoardListHtml = {}", dcBoardListHtml);
+
+            // 글마다 루프
+            for (Element dcBoardListItem : dcBoardListHtml) {
+
                 // 설문, AD, 공지 거름
-                String gallNum = element.select(".gall_num").text();
+                String gallNum = dcBoardListItem.select(".gall_num").text();
                 long parsedGallNum;
                 try {
                     parsedGallNum = Long.parseLong(gallNum);
@@ -73,90 +95,128 @@ public class DcCrawler {
                 }
 
                 // 글에서 필요한 부분 추출
-                Element titleElement = element.select(".gall_tit>a").first();
-                Element writerElement = element.select(".gall_writer>.nickname.in").first();
+                Element titleElement = dcBoardListItem.select(".gall_tit>a").first();
+                Element writerElement = dcBoardListItem.select(".gall_writer>.nickname").first();
 //                log.info("titleElement = {}", titleElement);
 //                log.info("writerElement = {}", writerElement);
                 String gallTitle = titleElement.text();
+                Element replyNumElement = titleElement.nextElementSibling();
+                String commentCnt = replyNumElement != null ? // 댓글없으면 null 임
+                        replyNumElement.select(".reply_num").text().replaceAll("[\\[\\]]", "") : // text = [1]
+                        "0";
                 String gallWriter = writerElement.attr("title");
-                String gallDate = element.select(".gall_date").attr("title");
-                String gallCount = element.select(".gall_count").text();
-                String gallRecommend = element.select(".gall_recommend").text();
+                String gallDate = dcBoardListItem.select(".gall_date").attr("title");
+                String gallCount = dcBoardListItem.select(".gall_count").text();
+                String gallRecommend = dcBoardListItem.select(".gall_recommend").text();
 
                 // 날짜 변환 형식 : 2024-07-19 12:05:43
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
                 LocalDateTime convertedGallDate = LocalDateTime.parse(gallDate, formatter);
 
-                Board board = Board.builder()
-                        .id(parsedGallNum)
+                // 글 저장용 객체 생성(내용제외)
+                DcBoard dcBoard = DcBoard.builder()
+                        .dcNum(parsedGallNum)
                         .title(gallTitle)
                         .writer(gallWriter)
                         .regDate(convertedGallDate)
                         .viewCnt(Long.parseLong(gallCount))
-                        .recommend(Long.parseLong(gallRecommend))
-                        .build();
+                        .recommendCnt(Long.parseLong(gallRecommend))
+                        .commentCnt(Long.parseLong(commentCnt))
+                        .sourceType(SourceType.DC)
+                        .build(); // content, recommend null
 
                 // a 태그에서 글 href 추출
-                String href = element.select(".ub-content a").attr("href");
+                String href = dcBoardListItem.select(".ub-content a").attr("href");
                 executeUrl = baseUrl + href;
-                
+
                 // 글 접속
                 try {
+                    log.info("opening board executeUrl = {}", executeUrl);
                     webDriver.get(executeUrl);
-                    log.info("opened board executeUrl = {}", executeUrl);
-                    Thread.sleep(3000);
+                    crawledBoardCounter++;
+                } catch (TimeoutException e) {
+                    log.error("[ERROR] webDriver.get(executeUrl);  executeUrl = {} TIMEOUT", executeUrl);
+                    continue; // 실패 시 페이지 변화없이 재로드
                 } catch (Exception e) {
                     log.error("[ERROR] webDriver.get(executeUrl); Thread.sleep() executeUrl = {} e = {}", executeUrl, e);
                     continue;
                 }
 
                 String boardPageSource = webDriver.getPageSource();
-                Document boardDocument = Jsoup.parse(boardPageSource);
+                Document dcBoardHtml = Jsoup.parse(boardPageSource);
 
                 // 내용 추출
-                Elements writeElement = boardDocument.select(".write_div");
-                log.info("writeElement .html() = {}, .text() = {}", writeElement.html(), writeElement.text());
-                String content = writeElement.isEmpty() ? "" : writeElement.html();
+                Elements writeElement = dcBoardHtml.select(".write_div");
+                String rawContent = writeElement.html();
 
-                board.setContent(content);
-                boards.add(board);
+                // 념글 확인
+                Elements recommendBoxElement = dcBoardHtml.select(".btn_recommend_box");
+                boolean isRecommended = !recommendBoxElement.select(".btn_recom_up.on").isEmpty(); // 념글버튼의 클래스에 .on 붙으면 념글
 
-                // 통상
-//                pageNum++;
-                
+                // DcBoard 객체에 내용 추가
+                dcBoard.setRecommended(isRecommended);
+                dcBoard.setContent(rawContent);
+                dcBoard.setCleanContent(ContentCleaner.cleanContent(rawContent));
+
+                log.info("\n================================================================\n" +
+                                "  executeUrl = [{}]\n" +
+                                "  title = \n" +
+                                "{}\n" +
+                                "  cleanContent = \n" +
+                                "{}\n" +
+                                "================================================================\n",
+                        executeUrl,
+                        dcBoard.getTitle(),
+                        dcBoard.getCleanContent()
+                );
+
+                // DB 저장을 위한 리스트에 추가
+                dcBoardsForSave.add(dcBoard);
+
                 // 하나만 하고 끝내기 ===============
-                break;
+//                break;
+
+//                 여러개 하고 끝내기
+                if (devCounter >= 3) break;
+                devCounter++;
 
             } // for Element
 
+            log.info("\n===================================================[pageNum = {}/{} END]" +
+                            "===================================================",
+                    pageNum, maxPageNum);
+
+            // DB 저장용 리스트를 이용해 DB 저장 (비동기), 비동기 작업 리스트에 추가 (페이지 단위)
+            completableFutures.add(dcBoardService.asyncSaveBoards(dcBoardsForSave.toArray(new DcBoard[0])));
+            dcBoardsForSave.clear();
+
             pageNum++;
-            
-            // 임베딩
-
-            asyncEmbedding(boards);
-
-
+            devCounter = 1L;
         } // for pageNum
 
-        // 크롤링 종료
+
+        // 웹 크롤링 종료
         webDriver.quit();
+        endTime = LocalDateTime.now();
+        log.info("\n  [CRAWL END] =======================================================\n" +
+                        "  elaspedTime = {}min, startedFrom = {}, endTime = {}\n" +
+                        "  crawledCounter = {} ",
+                Duration.between(startTime, endTime).toMinutes(), startTime, endTime,
+                crawledBoardCounter);
 
-        boards.forEach(board -> {
-            log.info("board = {}", board);
-        });
+//         save 끝날때 까지 대기
+        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+
+        savedBoardCounter = dcBoardService.countByCreatedAtAfter(startTime);
+
+        // 크롤링 완전 종료
+        endTime = LocalDateTime.now();
+        log.info("\n  [CRAWL COMPLETE] ==================================================\n" +
+                        "  elaspedTime = {}min, startedFrom = {}, endTime = {}\n" +
+                        "  crawledCounter = {}, savedBoardCounter = {}",
+                Duration.between(startTime, endTime).toMinutes(), startTime, endTime,
+                crawledBoardCounter, savedBoardCounter);
     }
-
-    private void asyncEmbedding(List<Board> boards) {
-        for (Board board : boards) {
-            embeddingClient.embed(board.getTitle());
-
-            embeddingClient.embed(board.getContent());
-        }
-
-
-
-    }
-
 
 }
 
