@@ -5,15 +5,43 @@
   <title>홈</title>
 </head>
 <body>
-  <h1>크롤링</h1>
+  <h1>스크래핑</h1>
   <form action="/start" method="get">
     <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
     <label>끝페이지</label><input type="number" min="1" max="99999" name="endPage" placeholder="" required>
-    <button type="submit">크롤링 시작</button>
+    <label>인터벌</label><input type="number" min="1" max="99999" name="interval" placeholder="" required>
+    <label>리스트페이지</label><input type="radio" name="scrapeOption" value="LISTPAGE">
+    <label>뷰페이지</label><input type="radio" name="scrapeOption" value="VIEWPAGE">
+    <label>전부</label><input type="radio" name="scrapeOption" value="ALL" checked required>
+    <button type="submit">스크래핑 시작</button>
+  </form>
+  <h1>단건 스크래핑</h1>
+  <form action="/start-single" method="get">
+    <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
+    <label>리스트페이지</label><input type="radio" name="scrapeOption" value="LISTPAGE" checked>
+    <label>뷰페이지</label><input type="radio" name="scrapeOption" value="VIEWPAGE">
+    <label>전부</label><input type="radio" name="scrapeOption" value="ALL" required>
+    <button type="submit">스크래핑 시작</button>
   </form>
   <hr>
+  <form action="/delete-duplicate" method="get">
+    <label>리미트dcnum </label><input type="number" min="1" max="9999999" name="limitDcNum" placeholder="" required>
+    <button type="submit">중복 제거</button>
+  </form>
+  <hr>
+  <button onclick="location.href='/quit'">드라이버 종료</button>
+  <hr>
   <button onclick="location.href='/embed'">임베딩</button>
-  <button onclick="location.href='/embed-loop'">임베딩루프</button>
+  <button onclick="location.href='/embed-partial'">파셜 임베딩</button>
+  <hr>
+<form action="/find-page" method="get">
+  <label>년</label><input type="text"  name="year" placeholder="" required>
+  <label>월</label><input type="number" min="1" max="12" name="month" placeholder="" required>
+  <label>일</label><input type="number" min="1" max="31" name="day" placeholder="" required>
+  <label>갤러리id</label><input type="text"  name="galleryId" placeholder="" required>
+  <label>마이너갤러리인지 여부</label><input type="checkbox" name="isMinorGallery" value="true">
+  <button type="submit">페이지 찾기</button>
+</form>
 
 </body>
 </html>

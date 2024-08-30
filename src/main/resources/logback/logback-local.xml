@@ -1,49 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <!-- .../Project/log/logback -->
-    <property name="LOG_DIR" value="\customLog/logback" />
+    <!-- 파일 절대경로 ( \ = C:\ ) -->
+<!--    <property name="LOG_DIR" value="\customLog/logback" />-->
+    <property name="LOG_DIR" value="\Users\felix\.Study\Spring_Practice\.log\Dcscraper" />
+    <turboFilter class="kr.granblue.dcscraper.log.VectorLogFilter"></turboFilter>
 
-    <!-- CONSOLE 콘솔 로그-->
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="kr.granblue.seleniumcrawler.log.VectorLogFilter"></filter>
+
+    <!-- CONSOLE 콘솔 로그 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                aCON %highlight(%-5level) %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %green(%30logger{1}) - %msg%n
+                %highlight(%-5level) %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %green(%30logger{1}) - %msg%n
             </Pattern>
         </layout>
     </appender>
 
-    <!-- SYSLOG 전체 파일 로그-->
-    <appender name="SYSLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/syslog/syslog.log</file>
+    <!-- 콘솔로그 전체를 파일로 출력 -->
+    <appender name="consoleToFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/console/consoleLog.log</file>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                aSYS %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
+                %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
             </Pattern>
         </layout>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/syslog/syslog.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/console/consoleLog %d{yyyy-MM-dd} [%i].log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>30</maxHistory> <!--갯수 한계-->
         </rollingPolicy>
     </appender>
 
-    <!-- APPLOG 애플리케이션 파일 로그 -->
-    <appender name="APPLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/applog/applog.log</file>
+    <!-- 스크래퍼 + sql.timing 만 파일로 출력 -->
+    <appender name="scrapeToFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/scrape/scrapeLog.log</file>
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                aApp %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
+                %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
             </Pattern>
         </layout>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/applog/applog.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/scrape/scrapeLog %d{yyyy-MM-dd} [%i].log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>30</maxHistory> <!--갯수 한계-->
         </rollingPolicy>
     </appender>
 
-    <!-- ERRORLOG 에러 파일 로그-->
-    <appender name="ERRORLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- sql.timing 만 파일로 출력 -->
+    <appender name="sqlToFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/sql/sqlLog.log</file>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
+            </Pattern>
+        </layout>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/sql/sqlLog %d{yyyy-MM-dd} [%i].log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>30</maxHistory> <!--갯수 한계-->
+        </rollingPolicy>
+    </appender>
+
+    <!-- 콘솔 출력물 중 에러만 파일로 출력 -->
+    <appender name="errorToFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!--LOG LEVEL FILTER, if ERROR true -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
@@ -51,59 +70,36 @@
             <OnMismatch>DENY</OnMismatch>
         </filter>
         <!-- 작성할 파일 -->
-        <file>${LOG_DIR}/errlog/errlog.log</file>
+        <file>${LOG_DIR}/error/errorLog.log</file>
         <!-- 로그 작성 (encoder)-->
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                aERR %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} %n[message] %msg%n
+                %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} %n[message] %msg%n
             </Pattern>
         </layout>
         <!-- 새 파일 작성 정책 -->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/errlog/errlog.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/error/errorLog %d{yyyy-MM-dd} [%i].log</fileNamePattern>
+            <maxFileSize>5MB</maxFileSize>
+            <maxHistory>30</maxHistory> <!--갯수 한계-->
         </rollingPolicy>
     </appender>
 
-    <!-- SQLLOG 파일 로그, 사용X -->
-    <appender name="SQLLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/sqllog/sqllog.log</file>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>
-                aSQL %-5level %d{yy-MM-dd HH:mm:ss.SSS} [%thread] : %30logger{1} - %msg%n
-            </Pattern>
-        </layout>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/sqllog/sqllog.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-    </appender>
-
-    <!--
-        출력              logger
-        콘솔            : root
-        syslog.log      : root                  사용X, 이유 = EB 에서 stdout 을 자동으로 파일로 씀.
-        applog.log      : hello.board
-        errorlog.log    : root
-        sqllog.log      : jdbc.sqltiming        사용X
-
-        root.CONSOLE 주석하면 hello.board.CONSOLE, jdbc.sqltiming.CONSOLE 켜줘야 됨. 반대역시 동일
-    -->
 
     <root level="info">
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="SYSLOG" />
-        <appender-ref ref="ERRORLOG"/>
+        <appender-ref ref="console" />
+        <appender-ref ref="consoleToFile" />
+        <appender-ref ref="errorToFile"/>
     </root>
 
-    <logger name="hello.board" level="info">
-<!--        <appender-ref ref="CONSOLE"/>-->
-        <appender-ref ref="APPLOG"/>
+<!--    스크래퍼 로거 -->
+    <logger name="kr.granblue.dcscraper.scraper" level="info">
+        <appender-ref ref="scrapeToFile"/>
     </logger>
 
     <logger name="jdbc.sqltiming" level="info">
-<!--        <appender-ref ref="CONSOLE" />-->
-        <appender-ref ref="SQLLOG" />
+<!--        <appender-ref ref="scrapeToFile" />-->
+        <appender-ref ref="sqlToFile" />
     </logger>
 
 
