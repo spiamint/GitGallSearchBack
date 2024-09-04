@@ -1,0 +1,26 @@
+
+commit 1
+    기본적인 프로젝트 생성 및
+    크롤러 구현 및 동작 확인
+
+commit 2
+    스크래핑과 임베딩 분리
+    개념글 여부 확인 및 저장
+    cleanContent 추출 방법 확정
+    스크래핑 페이지 파라미터 받아 진행하도로 수정
+    스크래핑 후 DB저장을 비동기로 수정
+    Insert 를 bulkInsert 로 수정
+    sql.timing 벡터값 로깅 수정
+
+commit 3
+    PageFinder 추가
+    spring-ai 버전 0.8.0 -> 1.0.0
+    전체 코드 수정
+    ScrapingOption 추가
+    scraper 코드 패키지 분리
+
+commit 4
+    깃헙 연동
+
+
+
