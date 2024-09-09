@@ -2,8 +2,8 @@ package kr.granblue.gbfsearchback.service;
 
 import kr.granblue.gbfsearchback.domain.DcBoard;
 import kr.granblue.gbfsearchback.repository.BulkInsertRepository;
-import kr.granblue.gbfsearchback.repository.mysql.DcBoardRepository;
-import kr.granblue.gbfsearchback.repository.dto.SimilarityDto;
+import kr.granblue.gbfsearchback.repository.DcBoardRepository;
+import kr.granblue.gbfsearchback.repository.dto.DuplicateCountDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +40,16 @@ public class DcBoardService {
                 bulkInsertRepository.bulkSaveBoard(dcBoards), executor);
     }
 
-    public int deleteDuplicate(long limitCount) {
+    public List<DcBoard> findDuplicateBoard() {
+        return boardRepository.findDuplicateBoard();
+    }
+
+    public DuplicateCountDto findDuplicateCount() {
+        return boardRepository.findDuplicateCount();
+    }
+
+    public int deleteDuplicate() {
+        // delete Embedding cascade
          return boardRepository.deleteDuplicate();
     }
 

@@ -2,7 +2,7 @@ package kr.granblue.gbfsearchback.service;
 
 import kr.granblue.gbfsearchback.domain.DcComment;
 import kr.granblue.gbfsearchback.repository.BulkInsertRepository;
-import kr.granblue.gbfsearchback.repository.mysql.DcCommentRepository;
+import kr.granblue.gbfsearchback.repository.DcCommentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

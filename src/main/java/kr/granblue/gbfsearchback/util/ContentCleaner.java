@@ -22,11 +22,7 @@ public class ContentCleaner {
         Element cleanedElement = Jsoup.parse(
                 Jsoup.clean(rawElement.html(), Safelist.basic()) // 글 관련 태그 남기고 삭제
         );
-        String cleanedText = cleanedElement.text();
-        cleanedText = cleanedText
-                .replace("- dc App", ".")
-                .replace("디시콘 보기", "."); // 공백으로 하면 "" 으로 embedding 요청 에러
-        return cleanedText; // 내부문자 추출
+        return cleanedElement.text(); // 내부문자 추출
     }
 
 }

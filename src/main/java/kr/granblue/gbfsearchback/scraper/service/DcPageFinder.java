@@ -6,5 +6,5 @@ import java.time.LocalDateTime;
 
 public interface DcPageFinder {
 
-    void findFirstPageByDate(LocalDateTime inputDateTime, String galleryId, boolean isMinorGallery, WebDriver webDriver);
+    void findFirstPageByDate(LocalDateTime inputDateTime, String galleryId, boolean isMinorGallery);
 }

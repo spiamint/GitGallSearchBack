@@ -1,14 +1,13 @@
 package kr.granblue.gbfsearchback.domain;
 
 import jakarta.persistence.*;
-import kr.granblue.gbfsearchback.domain.enums.SourceType;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity @Table(name = "dc_board")
-@Getter @ToString @EqualsAndHashCode(of = {"writer", "createdAt"})
+@Getter @ToString @EqualsAndHashCode
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -32,9 +31,6 @@ public class DcBoard {
 
     @Transient
     private String cleanContent;
-
-    @Enumerated(EnumType.STRING)
-    private SourceType sourceType;
 
     private boolean recommended;
 

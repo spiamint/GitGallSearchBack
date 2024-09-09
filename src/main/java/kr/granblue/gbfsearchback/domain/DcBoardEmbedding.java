@@ -20,18 +20,13 @@ public class DcBoardEmbedding { // delete on cascade by DB
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long boardId;
+    @OneToOne @JoinColumn(name = "board_id")
+    private DcBoard board;
 
     @JdbcTypeCode(SqlTypes.VECTOR) // @Array(length = 1536)
     private float[] titleContent = new float[] {0.0F}; // title + content
 
     @CreationTimestamp
     private LocalDateTime createdAt;
-
-    private boolean recommended;
-
-    public void setRecommended(boolean recommended) {
-        this.recommended = recommended;
-    }
 
 }

@@ -5,7 +5,6 @@ import kr.granblue.gbfsearchback.domain.DcBoardEmbedding;
 import kr.granblue.gbfsearchback.domain.DcComment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -19,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class BulkInsertRepository {
-    private final @Qualifier("mysqlDataSource") DataSource mysqlDataSource;
-    private final @Qualifier("postgreDataSource") DataSource postgreDataSource;
 
     @Value("${spring.jpa.properties.hibernate.default_schema}")
     private String schema;
+
+    private final DataSource dataSource;
 
     @Transactional
     public void bulkSaveBoard(List<DcBoard> boards) {
@@ -31,27 +30,25 @@ public class BulkInsertRepository {
     }
 
     protected void batchBoardInsert(List<DcBoard> boards, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(mysqlDataSource);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.batchUpdate(
                 "INSERT INTO " + schema + ".dc_board (" +
                         "dc_num, title, writer, content," +
                         " reg_date," +
                         " view_cnt, recommend_cnt, comment_cnt," +
-                        " source_type," +
                         " recommended)" +
-                        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 boards, batchSize,
                 (ps, board) -> {
                     ps.setLong(1, board.getDcNum());
                     ps.setString(2, board.getTitle());
                     ps.setString(3, board.getWriter());
                     ps.setString(4, board.getContent());
-                    ps.setString(5, board.getRegDate().toString());
+                    ps.setObject(5, board.getRegDate());
                     ps.setLong(6, board.getViewCnt());
                     ps.setLong(7, board.getRecommendCnt());
                     ps.setLong(8, board.getCommentCnt());
-                    ps.setString(9, board.getSourceType().name());
-                    ps.setBoolean(10, board.isRecommended());
+                    ps.setBoolean(9, board.isRecommended());
                 });
     }
 
@@ -65,7 +62,7 @@ public class BulkInsertRepository {
     }
 
     protected void batchBoardUpdate(List<DcBoard> boards, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(mysqlDataSource);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         // update scrape_prd.dc_board set content = ? where dc_num = ?
         jdbcTemplate.batchUpdate(
                 "UPDATE " + schema + ".dc_board" +
@@ -88,7 +85,7 @@ public class BulkInsertRepository {
     }
 
     protected void batchsetTitle(List<DcBoard> boards, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(mysqlDataSource);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         // update scrape_prd.dc_board set title = ? where dc_num = ?
         jdbcTemplate.batchUpdate(
                 "UPDATE " + schema + ".dc_board" +
@@ -107,7 +104,7 @@ public class BulkInsertRepository {
     }
 
     protected void batchCommentInsert(List<DcComment> comments, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(mysqlDataSource);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.batchUpdate(
                 "INSERT INTO " + schema + ".dc_comment (" +
                         "comment_num, board_num, writer, content," +
@@ -119,9 +116,9 @@ public class BulkInsertRepository {
                     ps.setLong(2, comment.getBoardNum());
                     ps.setString(3, comment.getWriter());
                     ps.setString(4, comment.getContent());
-                    ps.setString(5, comment.getRegDate() != null ?
-                            comment.getRegDate().toString() :
-                            LocalDateTime.of(1999,01,01,00,00).toString()); // 삭제된 댓글
+                    ps.setObject(5, comment.getRegDate() != null ?
+                            comment.getRegDate() :
+                            LocalDateTime.of(1999,01,01,00,00)); // 삭제된 댓글
                     ps.setBoolean(6, comment.isReply());
                     ps.setLong(7, comment.getTargetNum());
                 });
@@ -133,34 +130,15 @@ public class BulkInsertRepository {
     }
 
     protected void batchEmbeddingInsert(List<DcBoardEmbedding> embeddings, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(postgreDataSource);
+        JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
         jdbcTemplate.batchUpdate(
                 "INSERT INTO " + schema + ".dc_board_embedding (" +
-                        " board_id, title_content, recommended)" +
-                        " VALUES (?, ?, ?)",
+                        " board_id, title_content)" +
+                        " VALUES (?, ?)",
                 embeddings, batchSize,
                 (ps, embedding) -> {
-                    ps.setLong(1, embedding.getBoardId());
+                    ps.setLong(1, embedding.getBoard().getId());
                     ps.setObject(2, embedding.getTitleContent());
-                    ps.setBoolean(3, embedding.isRecommended());
-                });
-    }
-
-    @Transactional
-    public void bulkUpdateEmbedding(List<DcBoardEmbedding> embeddings) {
-        batchEmbeddingUpdate(embeddings, embeddings.size());
-    }
-
-    protected void batchEmbeddingUpdate(List<DcBoardEmbedding> embeddings, int batchSize) {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(postgreDataSource);
-        jdbcTemplate.batchUpdate(
-                "UPDATE " + schema + ".dc_board_embedding" +
-                        " SET recommended = ?" +
-                        " WHERE board_id = ?",
-                embeddings, batchSize,
-                (ps, embedding) -> {
-                    ps.setBoolean(1, embedding.isRecommended());
-                    ps.setLong(2, embedding.getBoardId());
                 });
     }
 }

@@ -1,5 +1,6 @@
-package kr.granblue.gbfsearchback.repository.postgre;
+package kr.granblue.gbfsearchback.repository;
 
+import kr.granblue.gbfsearchback.domain.DcBoard;
 import kr.granblue.gbfsearchback.domain.DcBoardEmbedding;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,16 +21,13 @@ public interface DcBoardEmbeddingRepository extends JpaRepository<DcBoardEmbeddi
     // board_id 가 커도(나중이어도) 임베딩 삽입이 먼저되는 경우가 있어 board_id 로 정렬하도록 함
     DcBoardEmbedding findFirstByOrderByBoardIdDesc();
 
-    List<DcBoardEmbedding> findAll();
-
-
-    @Query(nativeQuery = true,
-            value = "UPDATE scrape_prod.dc_board_embedding SET title_content = :defaultEmbedding" +
-            " where title_content is null")
-    void updateNullToDefault(float[] defaultEmbedding);
-
+    /**
+     * 임베딩을 DcBoard.id 기준으로 삭제 (중복 제거)
+     * @param boardIds
+     * @return
+     */
     @Transactional @Modifying
-    @Query("delete from DcBoardEmbedding be where be.boardId in :boardIds")
+    @Query("delete from DcBoardEmbedding be where be.board.id in :boardIds")
     int deleteByBoardIdIn(List<Long> boardIds);
 
 }

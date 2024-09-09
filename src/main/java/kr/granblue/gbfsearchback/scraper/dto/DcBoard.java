@@ -1,13 +1,10 @@
 package kr.granblue.gbfsearchback.scraper.dto;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Builder
+@Builder @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class DcBoard {
@@ -31,41 +28,5 @@ public class DcBoard {
     }
     public void setRecommended(boolean recommended) { this.recommended = recommended; }
 
-
-    public Long getDcNum() {
-        return dcNum;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public String getWriter() {
-        return writer;
-    }
-
-    public LocalDateTime getRegDate() {
-        return regDate;
-    }
-
-    public long getViewCnt() {
-        return viewCnt;
-    }
-
-    public long getCommentCnt() {
-        return commentCnt;
-    }
-
-    public long getRecommendCnt() {
-        return recommendCnt;
-    }
-
-    public boolean isRecommended() {
-        return recommended;
-    }
 }
 

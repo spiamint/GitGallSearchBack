@@ -1,7 +1,6 @@
 package kr.granblue.gbfsearchback.domain.mapper;
 
 import kr.granblue.gbfsearchback.domain.DcBoard;
-import kr.granblue.gbfsearchback.domain.enums.SourceType;
 
 public class DcBoardMapper {
 
@@ -16,7 +15,6 @@ public class DcBoardMapper {
                 .commentCnt(dcBoard.getCommentCnt())
                 .viewCnt(dcBoard.getViewCnt())
                 .recommendCnt(dcBoard.getRecommendCnt())
-                .sourceType(SourceType.DC)
                 .recommended(dcBoard.isRecommended())
                 .build();
     }

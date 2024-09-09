@@ -1,4 +1,4 @@
-package kr.granblue.gbfsearchback.repository.mysql;
+package kr.granblue.gbfsearchback.repository;
 
 import kr.granblue.gbfsearchback.domain.DcComment;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +11,4 @@ import java.util.List;
 @Repository
 public interface DcCommentRepository extends JpaRepository<DcComment, Long> {
     long countByCreatedAtAfter(LocalDateTime localDateTime);
-
-    @Query("select c from DcComment c where c.boardNum in :dcNum")
-    List<DcComment> findCommentsByBoardNumInDcNum(List<Long> dcNum);
 }

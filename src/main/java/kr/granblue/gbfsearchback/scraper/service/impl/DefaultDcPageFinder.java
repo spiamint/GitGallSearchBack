@@ -1,6 +1,7 @@
 package kr.granblue.gbfsearchback.scraper.service.impl;
 
 import com.google.common.base.Stopwatch;
+import kr.granblue.gbfsearchback.scraper.util.WebDriverUtil;
 import kr.granblue.gbfsearchback.scraper.dto.DcBoard;
 import kr.granblue.gbfsearchback.scraper.exception.RetryExceededException;
 import kr.granblue.gbfsearchback.scraper.extractor.BoardExtractor;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 public class DefaultDcPageFinder implements DcPageFinder {
 
     private final BoardExtractor boardExtractor;
+    private WebDriver webDriver;
 
     // 스크래핑 할 url, 가변 uri
     private String baseUrl = "http://gall.dcinside.com";
@@ -36,7 +38,10 @@ public class DefaultDcPageFinder implements DcPageFinder {
 
     private long maxRetryCount = 3;
 
-    public void findFirstPageByDate(LocalDateTime inputDateTime, String galleryId, boolean isMinorGallery, WebDriver webDriver) {
+    public void findFirstPageByDate(LocalDateTime inputDateTime, String galleryId, boolean isMinorGallery) {
+        // 드라이버 켜기
+        webDriver = WebDriverUtil.getChromeDriver();
+
         // 검색 페이지로 이동을 위한 url 설정
         String searchKeyword = "p"; // 글 내부에 p 요소 있으면 전부 검색됨 (div 등으로 확인)
         String encodedKeyword = URLEncoder.encode(searchKeyword);
@@ -198,7 +203,7 @@ public class DefaultDcPageFinder implements DcPageFinder {
                     index++;
                 }
 
-                // 종료 로깅
+                // 성공 종료 로깅
                 log.info("\n[BINARYSEARCH] End =================================");
                 log.info("index = {}\n" +
                         "Duration minute = {}m middlePageFirstDcBoardTime = {}, inputDateTime = {}\n" +
@@ -232,6 +237,9 @@ public class DefaultDcPageFinder implements DcPageFinder {
                 if (retryCounter > maxRetryCount) {
                     throw new RetryExceededException("retryCounter exceeded, stop scraping, retryCounter = {}" + retryCounter, e);
                 }
+            } finally {
+                webDriver.close();
+                webDriver.quit();
             }
         }
         log.info("최종 종료;");

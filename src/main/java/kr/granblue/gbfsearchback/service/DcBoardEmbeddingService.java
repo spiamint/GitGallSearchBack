@@ -1,14 +1,12 @@
 package kr.granblue.gbfsearchback.service;
 
-import com.google.common.base.Stopwatch;
 import kr.granblue.gbfsearchback.domain.DcBoard;
 import kr.granblue.gbfsearchback.domain.DcBoardEmbedding;
-import kr.granblue.gbfsearchback.domain.DcComment;
 import kr.granblue.gbfsearchback.repository.BulkInsertRepository;
-import kr.granblue.gbfsearchback.repository.mysql.DcCommentRepository;
-import kr.granblue.gbfsearchback.repository.postgre.DcBoardEmbeddingRepository;
-import kr.granblue.gbfsearchback.repository.mysql.DcBoardRepository;
+import kr.granblue.gbfsearchback.repository.DcBoardEmbeddingRepository;
+import kr.granblue.gbfsearchback.repository.DcBoardRepository;
 import kr.granblue.gbfsearchback.util.ContentCleaner;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.Embedding;
@@ -21,15 +19,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /*
  * 병렬처리를 위해 별도분리
@@ -45,40 +41,88 @@ public class DcBoardEmbeddingService {
     private final BulkInsertRepository bulkInsertRepository;
     private final @Qualifier("embedExecutor") Executor embedExecutor;
 
-    public long countByCreatedAtAfter(LocalDateTime localDateTime) {
-        return embeddingRepository.countByCreatedAtAfter(localDateTime);
+    /**
+     * 페이지 단위 임베딩 실행
+     * @param pageSize : DB 에서 조회할때 필요한 페이지 사이즈
+     * @param maxSize : 임베딩 maxSize
+     * @param option : "full", "from-last" 두개 (time 제한 추가예정)
+     */
+    public void embed(int pageSize, long maxSize, String option) {
+        setTarget(pageSize, maxSize, option);
     }
 
     /**
-     * 마지막으로 임베딩된 게시글 이후의 게시글을 모두 임베딩
+     * 임베딩 대상 설정
      * @param pageSize
-     * @param time
+     * @param maxSize
+     * @param option : "full", "from-last"
      */
-    public void embedNotEmbedded(int pageSize, long maxSize, LocalDateTime time) {
-        // 비동기 처리 리스트
-        List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        // 시간이 null 로 들어오면 풀스캔 (1999.01.01)
-        time = time == null ? LocalDateTime.of(1999, 1, 1, 0, 0) : time;
+    protected  void setTarget(int pageSize, long maxSize, String option) {
+        Params params; // DB 에서 조회할때 필요한 메서드 파라미터
+        Function<Params, Page<DcBoard>> getNotEmbeddedBoardsFunction; // DB 에서 조회할때 사용할 메서드
+        switch (option) {
+            case "full": // 전체 스캔후 임베딩 안된것 임베딩
+                params = new Params(pageSize, maxSize, null);
+                getNotEmbeddedBoardsFunction =
+                        (p) -> boardRepository.findBoardsWithoutEmbeddingFull(PageRequest.of(p.getPageNum(), p.getPageSize()));
+                break;
 
+            case "from-last": // 마지막으로 임베딩 된 게시글 이후부터 임베딩
+                // 마지막으로 임베딩 된 게시글
+                DcBoardEmbedding lastEmbeddedBoard = embeddingRepository.findFirstByOrderByBoardIdDesc();
+                log.info("lastEmbeddedBoard = {}", lastEmbeddedBoard);
+                // 첫실행 시 lastEmbeddedBoard 가 없으면 fullscan
+                Long lastEmbeddedBoardId = lastEmbeddedBoard == null ? 0L : lastEmbeddedBoard.getBoard().getId();
+
+                params = new Params(pageSize, maxSize, lastEmbeddedBoardId);
+                getNotEmbeddedBoardsFunction =
+                        (p) -> boardRepository.findPagedBoardByIdGreaterThan(PageRequest.of(p.getPageNum(), p.getPageSize()), (long) p.getParam());
+                break;
+                
+            default:
+                throw new IllegalArgumentException("pageSize = " + pageSize + " / maxSize = " + maxSize + " / option = " + option);
+        }
+
+        // 임베딩 할 대상을 DB 에서 조회
+        loadAndExecute(params, getNotEmbeddedBoardsFunction);
+    }
+
+    /**
+     * 임베딩 할 대상을 DB 에서 조회후, 전처리 및 실제 임베딩 호출 실행
+     * @param params
+     * @param getNotEmbeddedBoardFunction
+     * @return
+     */
+    protected void loadAndExecute(Params params, Function<Params, Page<DcBoard>> getNotEmbeddedBoardFunction) {
+        // 비동기 작업 리스트
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        // 시작시간
         LocalDateTime startTime = LocalDateTime.now();
-        // 페이지 단위 순회
-        for (int pageNum = 0; pageNum * pageSize < maxSize; pageNum++) {
-            Page<DcBoard> boardsWithoutEmbedding = boardRepository.findBoardsWithoutEmbedding(PageRequest.of(pageNum, pageSize), time);
-            if (boardsWithoutEmbedding.isEmpty()) break;
-            List<DcBoard> notEmbeddedBoards = boardsWithoutEmbedding.getContent();
+        
+        // 페이지 순회
+        for (int pageNum = 0; pageNum * params.getPageSize() < params.getMaxSize(); pageNum++) {
+            // 시작 페이지 설정
+            params.setPageNum(pageNum);
+            // 주어진 함수로 임베딩 안된 게시글 페이지 가져오기
+            Page<DcBoard> notEmbeddedBoardsPage = getNotEmbeddedBoardFunction.apply(params);
+            // 없으면 종료
+            if (notEmbeddedBoardsPage == null || notEmbeddedBoardsPage.isEmpty()) break;
 
+            // 내용에서 html 태그 제거
+            List<DcBoard> notEmbeddedBoards = notEmbeddedBoardsPage.getContent();
             notEmbeddedBoards.forEach(dcBoard -> {
                 dcBoard.setCleanContent(ContentCleaner.cleanContent(dcBoard.getContent()));
             });
 
             // 비동기 임베딩 내부호출
-//            completableFutures.add(this.asyncEmbedAndSave(notEmbeddedBoards));
+            futures.add(this.asyncEmbedAndSave(notEmbeddedBoards));
         }
 
-        // 비동기 작업 모두 종료
-        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+        // 비동기 작업 모두 종료 대기
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         LocalDateTime endTime = LocalDateTime.now();
 
+        // 로깅
         long countByCreatedAtAfter = embeddingRepository.countByCreatedAtAfter(startTime);
         log.info("\n[EMBEDDING COMPLETE]===============================================================\n" +
                         "countByCreadtedAtAfter lastEmbeddedBoard = {}\n" +
@@ -88,85 +132,37 @@ public class DcBoardEmbeddingService {
                 startTime, endTime);
     }
 
-    /**
-     * 특정 갯수 만큼 임베딩
-     *
-     * @param pageSize
-     * @param maxSize
-     */
-    public void partialEmbed(int pageSize, long maxSize) {
-        executeEmbed(pageSize, maxSize);
+    @Getter
+    class Params {
+        int pageNum;
+        int pageSize;
+        long maxSize;
+        Object param;
+
+        /**
+         * DB 조회용 메서드에서 사용할 파라미터, pageNum 은 조회시 할당
+         * @param pageSize : PageRequest.pageSize
+         * @param maxSize : 페이지 순회 최대값
+         * @param param : 추가 파라미터 Object
+         */
+        public Params(int pageSize, long maxSize, Object param) {
+            this.pageSize = pageSize;
+            this.maxSize = maxSize;
+            this.param = param;
+        }
+
+        public void setPageNum(int pageNum) {
+            this.pageNum = pageNum;
+        }
     }
 
     /**
-     * 페이지 단위로 비동기 임베딩 및 insert을 진행
-     *
-     * @param pageSize : DB에서 가져올 페이지 사이즈 (limit)
-     * @param maxSize  : 임베딩 해서 insert 할 최대 게시글 수 (count)
-     */
-    protected void executeEmbed(int pageSize, long maxSize) {
-        // 비동기 처리 리스트
-        List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
-        // 마지막으로 임베딩 된 게시글
-        DcBoardEmbedding lastEmbeddedBoard = embeddingRepository.findFirstByOrderByBoardIdDesc();
-        log.info("lastEmbeddedBoard = {}", lastEmbeddedBoard);
-        // 게시글이 null 이면 stop
-//        if (lastEmbeddedBoard == null) return;
-
-        Long lastEmbeddedBoardId;
-        if (lastEmbeddedBoard == null) {
-            lastEmbeddedBoardId = 0L;
-        } else {
-            lastEmbeddedBoardId = lastEmbeddedBoard.getBoardId();
-        }
-
-        LocalDateTime startTime = LocalDateTime.now();
-        // 페이지 단위 순회
-        for (int pageNum = 0; pageNum * pageSize < maxSize; pageNum++) {
-            // 임베딩 안된 게시글 페이지 가져오기
-            Page<DcBoard> notEmbeddedBoardsPage = boardRepository.findPagedBoardByIdGreaterThan(
-                    PageRequest.of(pageNum, pageSize), lastEmbeddedBoardId);
-            List<DcBoard> notEmbeddedBoards = notEmbeddedBoardsPage.getContent();
-
-            // content = null 거름
-            List<DcBoard> toEmbedBoards = notEmbeddedBoards.stream()
-                    .filter(dcBoard -> dcBoard.getContent() != null)
-                    .collect(Collectors.toList());
-
-            if (toEmbedBoards.isEmpty()) {
-                log.info("executeEmbed() toEmbedBoards.isEmpty()");
-                break;
-            }
-
-            toEmbedBoards.forEach(dcBoard -> {
-                dcBoard.setCleanContent(ContentCleaner.cleanContent(dcBoard.getContent()));
-            });
-
-            // 비동기 임베딩 내부호출
-            completableFutures.add(this.asyncEmbedAndSave(toEmbedBoards));
-        }
-
-        // 비동기 작업 모두 종료
-        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
-        LocalDateTime endTime = LocalDateTime.now();
-
-        long countByCreatedAtAfter = embeddingRepository.countByCreatedAtAfter(startTime);
-        log.info("\n[EMBEDDING COMPLETE]===============================================================\n" +
-                        "countByCreadtedAtAfter lastEmbeddedBoard = {}\n" +
-                        "startTime = {}, endTime = {}\n" +
-                        "====================================================================================",
-                countByCreatedAtAfter,
-                startTime, endTime);
-    }
-
-    /**
-     * 비동기 작업 : 실제 임베딩 및 INSERT
-     *
+     * 실제 임베딩 작업 비동기로 진행 및 INSERT
      * @param dcBoards
      * @return
      */
     @Async
-    public CompletableFuture<Void> asyncEmbedAndSave(List<DcBoard> dcBoards) {
+    protected CompletableFuture<Void> asyncEmbedAndSave(List<DcBoard> dcBoards) {
         return CompletableFuture.runAsync(() -> {
             List<DcBoardEmbedding> boardEmbeddings = new ArrayList<>();
             for (DcBoard dcBoard : dcBoards) {
@@ -201,9 +197,8 @@ public class DcBoardEmbeddingService {
 
                 // 임베딩 객체 생성 및 추가
                 DcBoardEmbedding boardEmbedding = DcBoardEmbedding.builder()
-                        .boardId(dcBoard.getId())
+                        .board(dcBoard)
                         .titleContent(output)
-                        .recommended(dcBoard.isRecommended())
                         .build();
                 boardEmbeddings.add(boardEmbedding);
             }
@@ -213,14 +208,4 @@ public class DcBoardEmbeddingService {
         }, embedExecutor);
     }
 
-    @Transactional
-    public void deleteDuplicateEmbedding() {
-        List<DcBoard> duplicateBoard = boardRepository.findDuplicateBoard();
-        List<Long> duplicateBoardIds = duplicateBoard.stream().map(DcBoard::getId).collect(Collectors.toList());
-        log.info("duplicateBoardIds = {}", duplicateBoardIds);
-        log.info("duplicateBoard.size() = {}", duplicateBoard.size());
-        int rows = embeddingRepository.deleteByBoardIdIn(duplicateBoardIds);
-        log.info("deleteDuplicateEmbedding() rows = {}", rows);
-
-    }
 }

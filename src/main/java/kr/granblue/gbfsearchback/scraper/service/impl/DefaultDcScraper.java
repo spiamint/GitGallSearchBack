@@ -441,9 +441,12 @@ public class DefaultDcScraper implements DcScraper {
                     // 글 하나만 하고 끝내기
 //                break;
 
-                    // 컷 카운터로 컷
-//                if (cutCounter >= 3) break;
-//                cutCounter++;
+//                     컷 카운터로 컷
+                if (cutCounter >= 5) {
+                    resultBoards = resultBoards.subList(0, (int) cutCounter);
+                    break;
+                }
+                cutCounter++;
 
                 } // for trElements
             }

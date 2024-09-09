@@ -1,45 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <title>홈</title>
+  <style>
+      form {
+          margin-bottom: 20px;
+      }
+
+      label {
+          margin-right: 10px;
+      }
+
+      input {
+          margin-right: 10px;
+      }
+
+      button {
+          margin-right: 10px;
+      }
+  </style>
 </head>
 <body>
-  <h1>스크래핑</h1>
-  <form action="/start" method="get">
-    <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
-    <label>끝페이지</label><input type="number" min="1" max="99999" name="endPage" placeholder="" required>
-    <label>인터벌</label><input type="number" min="1" max="99999" name="interval" placeholder="" required>
+<h2>스크래핑</h2>
+<form action="/start" method="get">
+  <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
+  <label>끝페이지</label><input type="number" min="1" max="99999" name="endPage" placeholder="" required>
+  <label>인터벌</label><input type="number" min="1" max="99999" name="interval" placeholder="" required>
+  <div>
     <label>리스트페이지</label><input type="radio" name="scrapeOption" value="LISTPAGE">
     <label>뷰페이지</label><input type="radio" name="scrapeOption" value="VIEWPAGE">
     <label>전부</label><input type="radio" name="scrapeOption" value="ALL" checked required>
-    <button type="submit">스크래핑 시작</button>
-  </form>
-  <h1>단건 스크래핑</h1>
-  <form action="/start-single" method="get">
-    <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
+  </div>
+  <button type="submit">스크래핑 시작</button>
+</form>
+<h2>단건 스크래핑</h2>
+<form action="/start-single" method="get">
+  <label>시작페이지</label><input type="number" min="1" max="99999" name="startPage" placeholder="" required>
+  <div>
     <label>리스트페이지</label><input type="radio" name="scrapeOption" value="LISTPAGE" checked>
     <label>뷰페이지</label><input type="radio" name="scrapeOption" value="VIEWPAGE">
     <label>전부</label><input type="radio" name="scrapeOption" value="ALL" required>
-    <button type="submit">스크래핑 시작</button>
-  </form>
-  <hr>
-  <form action="/delete-duplicate" method="get">
-    <label>리미트dcnum </label><input type="number" min="1" max="9999999" name="limitDcNum" placeholder="" required>
-    <button type="submit">중복 제거</button>
-  </form>
-  <hr>
-  <button onclick="location.href='/quit'">드라이버 종료</button>
-  <hr>
-  <button onclick="location.href='/embed'">임베딩</button>
-  <button onclick="location.href='/embed-partial'">파셜 임베딩</button>
-  <hr>
+  </div>
+  <button type="submit">스크래핑 시작</button>
+</form>
+
+<hr>
+
+<h2>중복 관리</h2>
+<form action="show-duplicate">
+  <button type="submit">중복 보기</button>
+  <div th:if="${duplicateSize != null}">
+    <span th:text="${'중복(삭제) 갯수 / 예측 갯수   :   ' + duplicateSize + ' / ' + expectedCount}">
+      중복갯수
+    </span>
+    <br>
+    <span th:text="${'distinct 갯수 / 총 갯수   :   ' + distinctCount + ' / ' + totalCount}">
+      distinct/총갯수
+    </span>
+  </div>
+</form>
+<form action="/delete-duplicate" method="get">
+  <!--  <label>리미트dcnum </label><input type="number" min="1" max="9999999" name="limitDcNum" placeholder="" required>-->
+  <button type="submit">중복 제거</button>
+  <div th:if="${deletedCount != null}">
+    <span th:text="${'제거된 갯수  :  ' + deletedCount}">
+      제거갯수
+    </span>
+  </div>
+</form>
+
+<hr>
+
+<h2>임베딩</h2>
+<form action="/embed-full">
+  <label>DB 페이징 사이즈</label><input type="number" min="1" max="99999" name="pageSize" placeholder="" required>
+  <label>총 갯수</label><input type="number" min="1" max="999999" name="maxSize" placeholder="" required>
+  <button type="submit">풀스캔 임베딩</button>
+</form>
+
+<!--  <button onclick="location.href='/embed'">임베딩</button>-->
+<form action="/embed-from-last">
+  <label>파트 사이즈</label><input type="number" min="1" max="99999" name="pageSize" placeholder="" required>
+  <label>총 갯수</label><input type="number" min="1" max="999999" name="maxSize" placeholder="" required>
+  <button type="submit">마지막 부터 임베딩</button>
+</form>
+
+<hr>
+
+<h2>페이지 찾기</h2>
 <form action="/find-page" method="get">
-  <label>년</label><input type="text"  name="year" placeholder="" required>
-  <label>월</label><input type="number" min="1" max="12" name="month" placeholder="" required>
-  <label>일</label><input type="number" min="1" max="31" name="day" placeholder="" required>
-  <label>갤러리id</label><input type="text"  name="galleryId" placeholder="" required>
-  <label>마이너갤러리인지 여부</label><input type="checkbox" name="isMinorGallery" value="true">
+  <div>
+    <label>년</label><input type="text" name="year" placeholder="" required>
+    <label>월</label><input type="number" min="1" max="12" name="month" placeholder="" required>
+    <label>일</label><input type="number" min="1" max="31" name="day" placeholder="" required>
+  </div>
+  <div>
+    <label>갤러리id</label><input type="text" name="galleryId" placeholder="" required>
+    <label>마이너갤러리인지 여부</label><input type="checkbox" name="isMinorGallery" value="true">
+  </div>
   <button type="submit">페이지 찾기</button>
 </form>
 

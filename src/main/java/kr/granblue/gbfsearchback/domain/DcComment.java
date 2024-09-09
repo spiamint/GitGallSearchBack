@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Builder
 @Entity @Table(name = "dc_comment")
-@Getter @ToString @EqualsAndHashCode(of = {"writer", "createdAt"})
+@Getter @ToString @EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class DcComment {

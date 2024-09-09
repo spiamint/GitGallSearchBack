@@ -1,13 +1,10 @@
 package kr.granblue.gbfsearchback.scraper.dto;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Builder
+@Builder @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class DcComment {
@@ -26,37 +23,5 @@ public class DcComment {
 
     public void setTargetNum(Long commentNum) {
         this.targetNum = commentNum;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getCommentNum() {
-        return commentNum;
-    }
-
-    public Long getBoardNum() {
-        return boardNum;
-    }
-
-    public String getWriter() {
-        return writer;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public LocalDateTime getRegDate() {
-        return regDate;
-    }
-
-    public boolean isReply() {
-        return reply;
-    }
-
-    public Long getTargetNum() {
-        return targetNum;
     }
 }

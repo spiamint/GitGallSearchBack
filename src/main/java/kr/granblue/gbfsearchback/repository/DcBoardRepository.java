@@ -1,6 +1,7 @@
-package kr.granblue.gbfsearchback.repository.mysql;
+package kr.granblue.gbfsearchback.repository;
 
 import kr.granblue.gbfsearchback.domain.DcBoard;
+import kr.granblue.gbfsearchback.repository.dto.DuplicateCountDto;
 import kr.granblue.gbfsearchback.repository.dto.SimilarityDtoInterface;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,13 +17,10 @@ import java.util.List;
 
 @Repository
 public interface DcBoardRepository extends JpaRepository<DcBoard, Long> {
+    long countByCreatedAtAfter(LocalDateTime localDateTime);
 
     @Query("select b from DcBoard b where b.id > :id order by b.id asc")
     Page<DcBoard> findPagedBoardByIdGreaterThan(Pageable pageable, @Param("id") Long id);
-
-    @Query("select d from DcBoard d where d.id Not in" +
-            " (select t.id from (select min(b.id) as id from DcBoard b group by b.dcNum) as t )")
-    List<DcBoard> findDuplicateBoard();
 
     // dc_board_embedding 테이블과 조인하여 embedding 값이 없는 게시글을 찾는 쿼리
     @Query(nativeQuery = true,
@@ -38,11 +36,23 @@ public interface DcBoardRepository extends JpaRepository<DcBoard, Long> {
                     " AND b.created_at > :time")
     Page<DcBoard> findBoardsWithoutEmbedding(Pageable pageable, LocalDateTime time);
 
-    List<DcBoard> findByTitleIsNull();
+    // dc_board_embedding 테이블과 조인하여 embedding 값이 없는 게시글을 찾는 쿼리
+    @Query(value = "SELECT b FROM DcBoard b" +
+                    " LEFT JOIN DcBoardEmbedding be" +
+                    " ON b.id = be.board.id" +
+                    " WHERE be.id IS NULL",
+            countQuery = "SELECT count(*) FROM DcBoard b" +
+                    " LEFT JOIN DcBoardEmbedding be" +
+                    " ON b.id = be.board.id" +
+                    " WHERE be.id IS NULL")
+    Page<DcBoard> findBoardsWithoutEmbeddingFull(Pageable pageable);
 
-    DcBoard findByDcNum(long dcNum);
+    @Query("select count(*) as totalCount, count(distinct b.dcNum) as distinctCount from DcBoard b")
+    DuplicateCountDto findDuplicateCount();
 
-    long countByCreatedAtAfter(LocalDateTime localDateTime);
+    @Query("select d from DcBoard d where d.id Not in" +
+            " (select t.id from (select min(b.id) as id from DcBoard b group by b.dcNum) as t )")
+    List<DcBoard> findDuplicateBoard();
 
     @Transactional @Modifying
     @Query("delete from DcBoard d where d.id Not in (" +

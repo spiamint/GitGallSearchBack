@@ -3,13 +3,8 @@ package kr.granblue.gbfsearchback.controller;
 import kr.granblue.gbfsearchback.controller.form.FindPageForm;
 import kr.granblue.gbfsearchback.controller.form.ScrapeStartForm;
 import kr.granblue.gbfsearchback.domain.DcBoard;
-import kr.granblue.gbfsearchback.domain.DcBoardEmbedding;
-import kr.granblue.gbfsearchback.driver.WebDriverUtil;
-import kr.granblue.gbfsearchback.repository.BulkInsertRepository;
-import kr.granblue.gbfsearchback.repository.mysql.DcBoardRepository;
-import kr.granblue.gbfsearchback.repository.postgre.CommandQueryExecutor;
-import kr.granblue.gbfsearchback.repository.dto.SimilarityDto;
-import kr.granblue.gbfsearchback.repository.postgre.DcBoardEmbeddingRepository;
+import kr.granblue.gbfsearchback.repository.CommandQueryExecutor;
+import kr.granblue.gbfsearchback.repository.dto.DuplicateCountDto;
 import kr.granblue.gbfsearchback.scraper.enums.ScrapingOption;
 import kr.granblue.gbfsearchback.scraper.service.DcPageFinder;
 import kr.granblue.gbfsearchback.service.DcBoardEmbeddingService;
@@ -17,28 +12,19 @@ import kr.granblue.gbfsearchback.service.DcBoardService;
 import kr.granblue.gbfsearchback.service.ScrapingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openqa.selenium.WebDriver;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.embedding.EmbeddingRequest;
-import org.springframework.ai.embedding.EmbeddingResponse;
-import org.springframework.ai.openai.OpenAiEmbeddingOptions;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Stack;
-import java.util.concurrent.CompletableFuture;
 
 @Controller
 @Slf4j
@@ -53,24 +39,7 @@ public class IndexController {
     private final DcBoardEmbeddingService boardEmbeddingService;
     private final ScrapingService scrapingService;
 
-    private final @Qualifier("postgreDataSource") DataSource dataSource;
-
-
-    private final CommandQueryExecutor commandQueryExecutor;
-    @RequestMapping("/command")
-    @Transactional
-    public String command() {
-        try {
-            dataSource.getConnection().prepareStatement("vacuum full scrape_prod.dc_board_embedding").execute();
-        } catch (Exception e) {
-            log.error("{}", e);
-        }
-//        commandQueryExecutor.vacuum();
-//        commandQueryExecutor.alterTimeout();
-//        commandQueryExecutor.alterTimeout2();
-        return "index";
-    }
-
+    // 스크래핑 ===========================================================
 
     @RequestMapping("/start")
     public String start(@ModelAttribute("scrapeStartForm") ScrapeStartForm scrapeStartForm) {
@@ -104,38 +73,26 @@ public class IndexController {
         return "redirect:/";
     }
 
-    private final DcBoardRepository boardRepository;
-    @RequestMapping("/find-duplicate")
-    public String findDuplicate() {
-        List<DcBoard> duplicateBoards = boardRepository.findDuplicateBoard();
-        log.info("duplicateBoards.size(): {}", duplicateBoards.size());
-        duplicateBoards.forEach(duplicateBoard -> {
-            log.info("duplicateBoard: {}", duplicateBoard);
-        });
+    // 임베딩 ===========================================================
+
+    @RequestMapping("/embed-full")
+    public String embed(@RequestParam(name = "pageSize") int pageSize,
+                        @RequestParam(name = "maxSize") int maxSize) {
+        boardEmbeddingService.embed(pageSize, maxSize, "full");
         return "redirect:/";
     }
 
-    @RequestMapping("/delete-duplicate")
-    public String deleteDuplicate(@RequestParam(name = "limitDcNum") long limitCount) {
-        int deletedCount = boardService.deleteDuplicate(limitCount);
-        log.info("deletedCount: {}", deletedCount);
+    @RequestMapping("/embed-from-last")
+    public String partialEmbed(@RequestParam(name = "pageSize") int pageSize,
+                               @RequestParam(name = "maxSize") int maxSize) {
+        boardEmbeddingService.embed(pageSize, maxSize, "from-last");
         return "redirect:/";
     }
 
-    @RequestMapping("/delete-duplicate-embedding")
-    public String deleteDuplicateEmbedding() {
-        boardEmbeddingService.deleteDuplicateEmbedding();
-        return "redirect:/";
-    }
-
-    @RequestMapping("/quit")
-    public String quit() {
-        scrapingService.quitDriver();
-        return "redirect:/";
-    }
+    // 페이지 찾기 ===========================================================
 
     @RequestMapping("find-page")
-    public String findPage(@ModelAttribute("findPageForm") FindPageForm form) {
+    public String findPage(@ModelAttribute("findPageForm") FindPageForm form ) {
         log.info("form: {}", form);
         String inputYear = "" + form.getYear();
         String inputMonth = form.getMonth() > 10 ? "" + form.getMonth() : "0" + form.getMonth();
@@ -145,43 +102,59 @@ public class IndexController {
         String inputTimeString = inputYear + "-" + inputMonth + "-" + inputDay + " 00-00-00";
         LocalDateTime inputTime = LocalDateTime.from(DateTimeFormatter.ofPattern("yyyy-MM-dd HH-mm-ss").parse(inputTimeString));
 
-        WebDriver chromeDriver = WebDriverUtil.getChromeDriver();
         try {
-            pageFinder.findFirstPageByDate(inputTime, form.getGalleryId(), isMinorGallery, chromeDriver);
+            pageFinder.findFirstPageByDate(inputTime, form.getGalleryId(), isMinorGallery);
         } catch (Exception e) {
             log.error("[ERROR] scrapingService.findFirstPageByDate();=====================================\n" +
-                    "{}", e);
-            chromeDriver.quit(); // 예외 발생시 드라이버 종료
+                    "{}", e.getMessage());
         }
 
         return "redirect:/";
     }
 
+    // 중복제거 ===========================================================
 
-    @RequestMapping("/embed")
-    public String embed() {
-        boardEmbeddingService.embedNotEmbedded(1000, 90000, null);
-        return "redirect:/";
+    @RequestMapping("/show-duplicate")
+    public String showDuplicateBoard(Model model) {
+        List<DcBoard> duplicateBoard = boardService.findDuplicateBoard();
+        DuplicateCountDto duplicateCount = boardService.findDuplicateCount();
+        duplicateBoard.forEach(board  -> log.info("{}", board));
+        log.info("\n================================================================\n" +
+                "duplicateBoard.size() = {}\n" +
+                "totalCount = {}, distinctCount = {}\n",
+                duplicateBoard.size(),
+                duplicateCount.getTotalCount(), duplicateCount.getDistinctCount());
+
+        model.addAttribute("duplicateSize", duplicateBoard.size());
+        model.addAttribute("totalCount", duplicateCount.getTotalCount());
+        model.addAttribute("distinctCount", duplicateCount.getDistinctCount());
+        model.addAttribute("expectedCount", duplicateCount.getTotalCount() - duplicateCount.getDistinctCount());
+        return "index";
     }
 
-    @RequestMapping("/embed-partial")
-    public String partialEmbed() {
-        boardEmbeddingService.partialEmbed(1000, 50000);
-        return "redirect:/";
+    @RequestMapping("/delete-duplicate")
+    public String deleteDuplicateBoard(Model model) {
+        int deletedCount = boardService.deleteDuplicate();
+        log.info("deletedCount: {}", deletedCount);
+        model.addAttribute("deletedCount", deletedCount);
+        return "index";
     }
 
-    @RequestMapping("/search")
-    public String search(@RequestParam(name = "query") String query) {
-        log.info("query: {}", query);
-        EmbeddingResponse embeddingResponse = embeddingModel.call(new EmbeddingRequest(
-                List.of(query),
-                OpenAiEmbeddingOptions.builder().withDimensions(256).build()
-        ));
-        float[] embeddedQuery = embeddingResponse.getResult().getOutput();
-//        List<SimilarityDto> similarityDtos = boardService.getSimilarityTop10(embeddedQuery.toString());
-//        similarityDtos.forEach(similarityDto -> {
-//            log.info("similarityDto: {}", similarityDto);
-//        });
+    // 기타 ===========================================================
+
+    private final CommandQueryExecutor commandQueryExecutor;
+    private final DataSource dataSource;
+    @RequestMapping("/command")
+    @Transactional
+    public String command() {
+//        try {
+//            dataSource.getConnection().prepareStatement("vacuum full scrape_prod.dc_board_embedding").execute();
+//        } catch (Exception e) {
+//            log.error("{}", e);
+//        }
+//        commandQueryExecutor.vacuum();
+//        commandQueryExecutor.alterTimeout();
+//        commandQueryExecutor.alterTimeout2();
         return "index";
     }
 

@@ -1,4 +1,4 @@
-package kr.granblue.gbfsearchback.repository.postgre;
+package kr.granblue.gbfsearchback.repository;
 
 import kr.granblue.gbfsearchback.domain.DcBoardEmbedding;
 import org.springframework.data.jpa.repository.JpaRepository;

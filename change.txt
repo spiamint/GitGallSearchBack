@@ -22,5 +22,12 @@ commit 3
 commit 4
     깃헙 연동
 
+commit 5
+    DB postgres 로 통합, DataSource 통합
+    엔티티 연관관계 재설정 및 코드 정리
+    임베딩 서비스 코드 수정
+    뷰 수정
+
+
 
 
