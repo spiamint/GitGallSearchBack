@@ -28,6 +28,13 @@ commit 5
     임베딩 서비스 코드 수정
     뷰 수정
 
+commit 6
+    리드미 작성
+    DB 파라미터 조정
+    DC_Board_Embedding fk unique 제약 및 버그 수정
+    Embedding 토큰 초과 Exception 대응
+
+
 
 
 

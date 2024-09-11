@@ -3,12 +3,14 @@ package kr.granblue.gbfsearchback.controller;
 import kr.granblue.gbfsearchback.controller.form.FindPageForm;
 import kr.granblue.gbfsearchback.controller.form.ScrapeStartForm;
 import kr.granblue.gbfsearchback.domain.DcBoard;
+import kr.granblue.gbfsearchback.domain.DcComment;
 import kr.granblue.gbfsearchback.repository.CommandQueryExecutor;
 import kr.granblue.gbfsearchback.repository.dto.DuplicateCountDto;
 import kr.granblue.gbfsearchback.scraper.enums.ScrapingOption;
 import kr.granblue.gbfsearchback.scraper.service.DcPageFinder;
 import kr.granblue.gbfsearchback.service.DcBoardEmbeddingService;
 import kr.granblue.gbfsearchback.service.DcBoardService;
+import kr.granblue.gbfsearchback.service.DcCommentService;
 import kr.granblue.gbfsearchback.service.ScrapingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +21,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
@@ -37,6 +38,7 @@ public class IndexController {
 
     private final DcBoardService boardService;
     private final DcBoardEmbeddingService boardEmbeddingService;
+    private final DcCommentService commentService;
     private final ScrapingService scrapingService;
 
     // 스크래핑 ===========================================================
@@ -125,7 +127,7 @@ public class IndexController {
                 duplicateBoard.size(),
                 duplicateCount.getTotalCount(), duplicateCount.getDistinctCount());
 
-        model.addAttribute("duplicateSize", duplicateBoard.size());
+        model.addAttribute("duplicateBoard", duplicateBoard);
         model.addAttribute("totalCount", duplicateCount.getTotalCount());
         model.addAttribute("distinctCount", duplicateCount.getDistinctCount());
         model.addAttribute("expectedCount", duplicateCount.getTotalCount() - duplicateCount.getDistinctCount());
@@ -136,9 +138,37 @@ public class IndexController {
     public String deleteDuplicateBoard(Model model) {
         int deletedCount = boardService.deleteDuplicate();
         log.info("deletedCount: {}", deletedCount);
-        model.addAttribute("deletedCount", deletedCount);
+        model.addAttribute("deletedBoardCount", deletedCount);
         return "index";
     }
+
+    @RequestMapping("/show-duplicate-comment")
+    public String showDuplicateComment(Model model) {
+        List<DcComment> duplicateComments = commentService.findDuplicate();
+        DuplicateCountDto duplicateCount = commentService.findDuplicateCount();
+        duplicateComments.forEach(board  -> log.info("{}", board));
+        log.info("\n================================================================\n" +
+                        "duplicateComments.size() = {}\n" +
+                        "totalCount = {}, distinctCount = {}\n",
+                duplicateComments.size(),
+                duplicateCount.getTotalCount(), duplicateCount.getDistinctCount());
+
+        model.addAttribute("duplicateComments", duplicateComments);
+        model.addAttribute("totalCount", duplicateCount.getTotalCount());
+        model.addAttribute("distinctCount", duplicateCount.getDistinctCount());
+        model.addAttribute("expectedCount", duplicateCount.getTotalCount() - duplicateCount.getDistinctCount());
+        return "index";
+    }
+
+    @RequestMapping("/delete-duplicate-comment")
+    public String deleteDuplicateComment(Model model) {
+        int deletedCount = commentService.deleteDuplicate();
+        log.info("deletedCount: {}", deletedCount);
+        model.addAttribute("deletedCommentCount", deletedCount);
+        return "index";
+    }
+
+
 
     // 기타 ===========================================================
 

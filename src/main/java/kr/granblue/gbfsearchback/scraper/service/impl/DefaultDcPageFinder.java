@@ -175,7 +175,7 @@ public class DefaultDcPageFinder implements DcPageFinder {
 
                     // 중간 페이지 접속
                     executeUrl = urlPreFix + pageParameter + middlePage;
-                    log.info("binarySearching else executeUrl = {}", executeUrl);
+//                    log.info("binarySearching else executeUrl = {}", executeUrl);
                     webDriver.get(executeUrl);
 
                     // 중간 페이지 최상단 글 추출
@@ -188,7 +188,7 @@ public class DefaultDcPageFinder implements DcPageFinder {
                         break;
                     } else {
                         // 중간 페이지와 inputTime 의 차가 1분 이내가 아님
-                        log.info("binarySearching else searchStartPage = {}, searchEndPage = {}, middlePage = {}, middlePageFirstDcBoardTime = {} executeUrl = {}",
+                        log.info("Searching else searchStartPage = {}, searchEndPage = {}, middlePage = {}, middlePageFirstDcBoardTime = {} executeUrl = {}",
                                 searchStartPage, searchEndPage, middlePage, middlePageFirstDcBoardTime, executeUrl);
                         prevMiddelPage = middlePage; // 중복 탐색 방지를 위한 이전 middlePage 저장
 
@@ -204,16 +204,18 @@ public class DefaultDcPageFinder implements DcPageFinder {
                 }
 
                 // 성공 종료 로깅
-                log.info("\n[BINARYSEARCH] End =================================");
-                log.info("index = {}\n" +
-                        "Duration minute = {}m middlePageFirstDcBoardTime = {}, inputDateTime = {}\n" +
-                        "searchStartPage = {} searchEndPage = {}\n" +
-                        "middlePage = {} confirmUrl = {}\n" +
-                        "[BINARYSEARCH] End =================================",
-                        index,
-                        Duration.between(middlePageFirstDcBoardTime, inputDateTime).abs().toMinutes(), middlePageFirstDcBoardTime, inputDateTime,
-                        searchStartPage, searchEndPage, middlePage,
-                        executeUrl);
+                log.info("[SEARCH] End ==============================================");
+                log.info("find page number = {}", middlePage);
+                log.info(" -> check URL = {}", executeUrl);
+//                log.info("index = {}\n" +
+//                        "Duration minute = {}m middlePageFirstDcBoardTime = {}, inputDateTime = {}\n" +
+//                        "searchStartPage = {} searchEndPage = {}\n" +
+//                        "middlePage = {} confirmUrl = {}\n" +
+//                        "[BINARYSEARCH] End =================================",
+//                        index,
+//                        Duration.between(middlePageFirstDcBoardTime, inputDateTime).abs().toMinutes(), middlePageFirstDcBoardTime, inputDateTime,
+//                        searchStartPage, searchEndPage, middlePage,
+//                        executeUrl);
 
                 Duration duration = stopwatch.stop().elapsed();
                 log.info("[STOPWATCH] findFirstPageByDate : stopwatch.elapsed = {} : {}", duration.toSeconds(), duration.toMillisPart());
@@ -238,7 +240,6 @@ public class DefaultDcPageFinder implements DcPageFinder {
                     throw new RetryExceededException("retryCounter exceeded, stop scraping, retryCounter = {}" + retryCounter, e);
                 }
             } finally {
-                webDriver.close();
                 webDriver.quit();
             }
         }

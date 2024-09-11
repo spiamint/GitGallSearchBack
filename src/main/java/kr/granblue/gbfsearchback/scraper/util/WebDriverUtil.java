@@ -34,7 +34,8 @@ public class WebDriverUtil {
         ChromeDriverService defaultChromeService = ChromeDriverService.createDefaultService();
 
         WebDriver driver = new ChromeDriver(defaultChromeService, chromeOptions);
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(5000));
+//        driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(5000));
+//        driver.manage().timeouts().implicitlyWait(Duration.ofMillis(0));
 
         return driver;
     }

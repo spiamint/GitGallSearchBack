@@ -20,7 +20,8 @@ public class DcBoardEmbedding { // delete on cascade by DB
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne @JoinColumn(name = "board_id")
+    @OneToOne (fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id")
     private DcBoard board;
 
     @JdbcTypeCode(SqlTypes.VECTOR) // @Array(length = 1536)

@@ -3,11 +3,13 @@ package kr.granblue.gbfsearchback.service;
 import kr.granblue.gbfsearchback.domain.DcComment;
 import kr.granblue.gbfsearchback.repository.BulkInsertRepository;
 import kr.granblue.gbfsearchback.repository.DcCommentRepository;
+import kr.granblue.gbfsearchback.repository.dto.DuplicateCountDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +27,19 @@ public class DcCommentService {
 
     public long countByCreatedAtAfter(LocalDateTime localDateTime) {
         return commentRepository.countByCreatedAtAfter(localDateTime);
+    }
+
+    public DuplicateCountDto findDuplicateCount() {
+        return commentRepository.findDuplicateCount();
+    }
+
+    public List<DcComment> findDuplicate() {
+        return commentRepository.selectDuplicate();
+    }
+
+    @Transactional
+    public int deleteDuplicate() {
+        return commentRepository.deleteDuplicate();
     }
 
     public void saveComments(List<DcComment> comments) {

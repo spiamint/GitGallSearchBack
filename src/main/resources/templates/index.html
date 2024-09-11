@@ -49,9 +49,9 @@
 
 <h2>중복 관리</h2>
 <form action="show-duplicate">
-  <button type="submit">중복 보기</button>
-  <div th:if="${duplicateSize != null}">
-    <span th:text="${'중복(삭제) 갯수 / 예측 갯수   :   ' + duplicateSize + ' / ' + expectedCount}">
+  <button type="submit">중복 글 보기</button>
+  <div th:if="${duplicateBoard != null}">
+    <span th:text="${'중복(삭제) 갯수 / 예측 갯수   :   ' + duplicateBoard.size() + ' / ' + expectedCount}">
       중복갯수
     </span>
     <br>
@@ -62,9 +62,33 @@
 </form>
 <form action="/delete-duplicate" method="get">
   <!--  <label>리미트dcnum </label><input type="number" min="1" max="9999999" name="limitDcNum" placeholder="" required>-->
-  <button type="submit">중복 제거</button>
-  <div th:if="${deletedCount != null}">
-    <span th:text="${'제거된 갯수  :  ' + deletedCount}">
+  <button type="submit">중복 글 제거</button>
+  <div th:if="${deletedBoardCount != null}">
+    <span th:text="${'제거된 갯수  :  ' + deletedBoardCount}">
+      제거갯수
+    </span>
+  </div>
+</form>
+
+<hr>
+
+<form action="show-duplicate-comment">
+  <button type="submit">중복 댓글 보기</button>
+  <div th:if="${duplicateComments != null}">
+    <span th:text="${'중복(삭제) 갯수 / 예측 갯수   :   ' + duplicateComments.size() + ' / ' + expectedCount}">
+      중복갯수
+    </span>
+    <br>
+    <span th:text="${'distinct 갯수 / 총 갯수   :   ' + distinctCount + ' / ' + totalCount}">
+      distinct/총갯수
+    </span>
+  </div>
+</form>
+<form action="/delete-duplicate-comment" method="get">
+  <!--  <label>리미트dcnum </label><input type="number" min="1" max="9999999" name="limitDcNum" placeholder="" required>-->
+  <button type="submit">중복 댓글 제거</button>
+  <div th:if="${deletedCommentCount != null}">
+    <span th:text="${'제거된 갯수  :  ' + deletedCommentCount}">
       제거갯수
     </span>
   </div>

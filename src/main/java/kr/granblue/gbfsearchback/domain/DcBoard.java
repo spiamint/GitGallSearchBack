@@ -1,6 +1,7 @@
 package kr.granblue.gbfsearchback.domain;
 
 import jakarta.persistence.*;
+import kr.granblue.gbfsearchback.util.ContentCleaner;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -42,5 +43,9 @@ public class DcBoard {
     }
     public void setCleanContent(String cleanContent) { this.cleanContent = cleanContent; }
     public void setRecommended(boolean recommended) { this.recommended = recommended; }
+
+    public String cleanContent() {
+        return ContentCleaner.cleanContent(content);
+    }
 }
 

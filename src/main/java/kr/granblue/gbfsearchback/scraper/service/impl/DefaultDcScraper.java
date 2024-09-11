@@ -51,7 +51,9 @@ public class DefaultDcScraper implements DcScraper {
 
         scrapingOption = ScrapingOption.ALL;
         autoQuitWebDriver = false;
-        
+
+        webDriver = null;
+        webDriverWait = null;
         // 드라이버 초기화는 생성자가 아닌, 별도의 메서드를 이용한다.
         // 빈이 등록되는 시점이 아니라 빈을 사용하는 시점에 드라이버를 초기화 해야 
         // 어플리케이션이 켜지자마자 쓸데없이 브라우저가 바로 켜짐을 방지가능
@@ -107,7 +109,6 @@ public class DefaultDcScraper implements DcScraper {
 
     public void quitDriver() {
         if (isDriverAlive()) {
-            webDriver.close();
             webDriver.quit();
             webDriverWait = null;
         }
@@ -149,7 +150,7 @@ public class DefaultDcScraper implements DcScraper {
 
     public void setWebDriverWait(WebDriverWait webDriverWait) {
         if (webDriverWait == null) { // default
-            this.webDriverWait = new WebDriverWait(webDriver, Duration.ofMillis(2000));
+            this.webDriverWait = new WebDriverWait(webDriver, Duration.ofMillis(1));
         } else {
             this.webDriverWait = webDriverWait;
         }
@@ -212,7 +213,9 @@ public class DefaultDcScraper implements DcScraper {
 //        log.info("driver={}", webDriver);
 //        log.info("windowhandle = {}", webDriver.getWindowHandle());
 //        log.info("woindow = {}", webDriver.manage().window());
-//        log.info("implicitWait={}", webDriver.manage().timeouts().getImplicitWaitTimeout());
+        log.info("implicitWait={}", webDriver.manage().timeouts().getImplicitWaitTimeout());
+        log.info("scriptTimeout={}", webDriver.manage().timeouts().getScriptTimeout());
+        log.info("pageload = {}", webDriver.manage().timeouts().getPageLoadTimeout());
         log.info("pageload = {}", webDriver.manage().timeouts().getPageLoadTimeout());
 //        webDriver.quit();
 //        if (!isDriverAlive()) return;
@@ -430,7 +433,7 @@ public class DefaultDcScraper implements DcScraper {
                         // 댓글 개수 체크 (댓글돌이는 extractingBoard.getCommentCnt() 숫자에서 제외됨, 삭제된 댓글 갯수는 빼줘야됨)
                         if (extractingBoard.getCommentCnt() != extractedComments.size() - deletedCommentCount) {
                             log.warn("[COMMENT.PROPERLY] comment not extracted properly extractingBoard.getCommentCnt() = {} extractedComments.size() = {}, deletedCommentCount = {}, executeUrl={}", extractingBoard.getCommentCnt(), extractedComments.size(), deletedCommentCount, executeUrl);
-                            extractedComments.forEach(dcComment -> log.warn("dcComment = {}", dcComment));
+                            extractedComments.forEach(dcComment -> log.warn("dcComment = id = {} content = {}", dcComment.getId(), ContentCleaner.cleanContent(dcComment.getContent())));
                         }
                     }
                     // SrapingOption.ALL 종료지점 ===================================================
@@ -442,7 +445,7 @@ public class DefaultDcScraper implements DcScraper {
 //                break;
 
 //                     컷 카운터로 컷
-                if (cutCounter >= 5) {
+                if (cutCounter >= 3) {
                     resultBoards = resultBoards.subList(0, (int) cutCounter);
                     break;
                 }
@@ -510,8 +513,7 @@ public class DefaultDcScraper implements DcScraper {
 
             if (trElementsReloadCounter > 0) {
                 // 리스트 페이지의 글 갯수가 누락되어 재시도 중
-                long sleepTime = 1 + trElementsReloadCounter; // 재시도 카운터에 따라 대기시간 증가
-                Thread.sleep(sleepTime); // 리스트 페이지 로드 기다림
+                Thread.sleep(3000); // 리스트 페이지 로드 기다림
             }
 
             WebElement gallList = waitUntilElementLocated(By.cssSelector(boardListSelector));

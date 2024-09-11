@@ -124,6 +124,11 @@ public class BulkInsertRepository {
                 });
     }
 
+    /**
+     * Embedding 저장 <br>
+     * 100 개 insert 하는데에 35초정도 걸림
+     * @param embeddings
+     */
     @Transactional
     public void bulkSaveEmbedding(List<DcBoardEmbedding> embeddings) {
         batchEmbeddingInsert(embeddings, embeddings.size());

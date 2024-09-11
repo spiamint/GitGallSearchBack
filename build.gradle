@@ -50,16 +50,15 @@ dependencies {
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
     // 셀레니움
-    implementation 'org.seleniumhq.selenium:selenium-java:4.22.0'
+    // https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java
+    implementation 'org.seleniumhq.selenium:selenium-java:4.24.0'
+
 
     // Jsoup Html parser https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation 'org.jsoup:jsoup:1.15.3'
 
     // postgresql
     implementation 'org.postgresql:postgresql:42.7.3'
-
-    // mysql
-    runtimeOnly 'com.mysql:mysql-connector-j'
 
     // hibernate vector
     implementation 'org.hibernate.orm:hibernate-vector:6.4.0.Final'

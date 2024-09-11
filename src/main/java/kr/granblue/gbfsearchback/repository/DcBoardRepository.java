@@ -40,7 +40,8 @@ public interface DcBoardRepository extends JpaRepository<DcBoard, Long> {
     @Query(value = "SELECT b FROM DcBoard b" +
                     " LEFT JOIN DcBoardEmbedding be" +
                     " ON b.id = be.board.id" +
-                    " WHERE be.id IS NULL",
+                    " WHERE be.id IS NULL" +
+                    " ORDER BY b.id",
             countQuery = "SELECT count(*) FROM DcBoard b" +
                     " LEFT JOIN DcBoardEmbedding be" +
                     " ON b.id = be.board.id" +
@@ -54,7 +55,7 @@ public interface DcBoardRepository extends JpaRepository<DcBoard, Long> {
             " (select t.id from (select min(b.id) as id from DcBoard b group by b.dcNum) as t )")
     List<DcBoard> findDuplicateBoard();
 
-    @Transactional @Modifying
+    @Modifying
     @Query("delete from DcBoard d where d.id Not in (" +
             " select t.id from (select min(b.id) as id from DcBoard b group by b.dcNum) as t )")
     int deleteDuplicate();
