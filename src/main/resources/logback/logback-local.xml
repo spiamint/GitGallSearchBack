@@ -92,7 +92,7 @@
     </root>
 
 <!--    스크래퍼 로거 -->
-    <logger name="kr.granblue.gbfsearchback.scraper" level="info">
+    <logger name="kr.github.gitgallsearchback.scraper" level="info">
         <appender-ref ref="scrapeToFile"/>
     </logger>
 

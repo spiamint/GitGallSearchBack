@@ -34,6 +34,9 @@ commit 6
     DC_Board_Embedding fk unique 제약 및 버그 수정
     Embedding 토큰 초과 Exception 대응
 
+commit 7
+    데이터 및 테이블 변경
+
 
 
 
