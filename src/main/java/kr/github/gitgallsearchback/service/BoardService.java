@@ -17,7 +17,7 @@ import java.util.concurrent.Executor;
 
 @Service
 @RequiredArgsConstructor
-public class DcBoardService {
+public class BoardService {
 
     private final BulkInsertRepository bulkInsertRepository;
     private final DcBoardRepository boardRepository;
@@ -38,7 +38,9 @@ public class DcBoardService {
     @Async
     public CompletableFuture<Void> asyncSaveBoards(List<Board> boards) {
         return CompletableFuture.runAsync(() ->
-                bulkInsertRepository.bulkSaveBoard(boards), executor);
+                bulkInsertRepository.bulkSaveBoard(boards)
+                , executor
+        );
     }
 
     public List<Board> findDuplicateBoard() {

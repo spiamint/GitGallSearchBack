@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 @EnableAsync
 @Configuration
 public class AsyncConfig implements AsyncConfigurer {
-    
+
     @Bean @Qualifier("asyncExecutor") // ThreadPoolTaskExecutor 기본
     @Override
     public Executor getAsyncExecutor() {

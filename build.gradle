@@ -1,3 +1,5 @@
+
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.2'
@@ -16,6 +18,15 @@ java {
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
+    }
+}
+
+
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.seleniumhq.selenium') {
+            details.useVersion "4.24.0"
+        }
     }
 }
 
@@ -50,9 +61,10 @@ dependencies {
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
     // 셀레니움
-    // https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java
     implementation 'org.seleniumhq.selenium:selenium-java:4.24.0'
 
+    // playwright
+    implementation 'com.microsoft.playwright:playwright:1.47.0'
 
     // Jsoup Html parser https://mvnrepository.com/artifact/org.jsoup/jsoup
     implementation 'org.jsoup:jsoup:1.15.3'
@@ -64,6 +76,7 @@ dependencies {
     implementation 'org.hibernate.orm:hibernate-vector:6.4.0.Final'
 
 }
+
 
 tasks.named('test') {
     useJUnitPlatform()

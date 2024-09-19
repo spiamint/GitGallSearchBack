@@ -37,6 +37,11 @@ commit 6
 commit 7
     데이터 및 테이블 변경
 
+commit 8
+    자동화 도구를 Selenium 에서 PlayWright 로 변경
+    Scraper 및 PageFinder 코드 수정
+    스크래핑 재시도 관련 로직 수정
+
 
 
 

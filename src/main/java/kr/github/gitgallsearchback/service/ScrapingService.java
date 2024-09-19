@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ScrapingService {
 
-    private final DcBoardService boardService;
-    private final DcCommentService commentService;
+    private final BoardService boardService;
+    private final CommentService commentService;
     private final DcScraper dcScraper;
 
     /**
@@ -47,10 +47,8 @@ public class ScrapingService {
             // LISTPAGE -> ALL 채우기
         }
 
-        dcScraper.setScrapingOption(scrapingOption);
-        dcScraper.setAutoQuitWebDriver(true);
-
-        dcScraper.startWithCallback(ScrapeRequest.of("granblue", startPage, endPage, interval), callback);
+        dcScraper.setScrapingOption(ScrapingOption.ALL);
+        dcScraper.startWithCallback(ScrapeRequest.of("github", startPage, endPage, interval), callback);
 
         // 웹 스크래핑 종료
         long savedBoardCounter = boardService.countByCreatedAtAfter(startTime);
@@ -87,7 +85,7 @@ public class ScrapingService {
         LocalDateTime startTime = LocalDateTime.now();
         List<DcBoard> boards = dcBoardsAndComments.getBoards();
 
-        List<Board> domainBoards = boards.stream().map(board -> BoardMapper.fromDto(board)).collect(Collectors.toList());
+        List<Board> domainBoards = boards.stream().map(BoardMapper::fromDto).collect(Collectors.toList());
 
         boardService.saveBoards(domainBoards);
 
@@ -104,8 +102,8 @@ public class ScrapingService {
         List<DcBoard> boards = dcBoardsAndComments.getBoards();
         List<DcComment> comments = dcBoardsAndComments.getComments();
 
-        List<Board> domainBoards = boards.stream().map(board -> BoardMapper.fromDto(board)).collect(Collectors.toList());
-        List<Comment> domainComments = comments.stream().map(comment -> CommentMapper.fromDto(comment)).collect(Collectors.toList());
+        List<Board> domainBoards = boards.stream().map(BoardMapper::fromDto).collect(Collectors.toList());
+        List<Comment> domainComments = comments.stream().map(CommentMapper::fromDto).collect(Collectors.toList());
 
         boardService.fillContent(domainBoards);
         commentService.saveComments(domainComments);

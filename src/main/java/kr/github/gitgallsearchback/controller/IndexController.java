@@ -8,9 +8,9 @@ import kr.github.gitgallsearchback.repository.CommandQueryExecutor;
 import kr.github.gitgallsearchback.repository.dto.DuplicateCountDto;
 import kr.github.gitgallsearchback.scraper.enums.ScrapingOption;
 import kr.github.gitgallsearchback.scraper.service.DcPageFinder;
-import kr.github.gitgallsearchback.service.DcBoardEmbeddingService;
-import kr.github.gitgallsearchback.service.DcBoardService;
-import kr.github.gitgallsearchback.service.DcCommentService;
+import kr.github.gitgallsearchback.service.EmbeddingService;
+import kr.github.gitgallsearchback.service.BoardService;
+import kr.github.gitgallsearchback.service.CommentService;
 import kr.github.gitgallsearchback.service.ScrapingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,9 +36,9 @@ public class IndexController {
 
     private final EmbeddingModel embeddingModel;
 
-    private final DcBoardService boardService;
-    private final DcBoardEmbeddingService boardEmbeddingService;
-    private final DcCommentService commentService;
+    private final BoardService boardService;
+    private final EmbeddingService boardEmbeddingService;
+    private final CommentService commentService;
     private final ScrapingService scrapingService;
 
     // 스크래핑 ===========================================================

@@ -19,7 +19,7 @@ import java.util.concurrent.Executor;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DcCommentService {
+public class CommentService {
 
     private final BulkInsertRepository bulkInsertRepository;
     private final DcCommentRepository commentRepository;
@@ -49,7 +49,9 @@ public class DcCommentService {
     @Async
     public CompletableFuture<Void> asyncSaveComments(List<Comment> comments) {
         return CompletableFuture.runAsync(() ->
-                bulkInsertRepository.bulkSaveComment(comments), executor);
+                bulkInsertRepository.bulkSaveComment(comments)
+                , executor
+        );
     }
 
 }

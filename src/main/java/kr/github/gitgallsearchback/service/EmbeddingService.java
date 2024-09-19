@@ -37,13 +37,13 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DcBoardEmbeddingService {
+public class EmbeddingService {
 
     private final EmbeddingModel embeddingModel;
     private final DcBoardEmbeddingRepository embeddingRepository;
     private final DcBoardRepository boardRepository;
     private final BulkInsertRepository bulkInsertRepository;
-    private final @Qualifier("embedExecutor") Executor embedExecutor;
+//    private final @Qualifier("embedExecutor") Executor embedExecutor;
 
     /**
      * 페이지 단위 임베딩 실행
@@ -247,7 +247,9 @@ public class DcBoardEmbeddingService {
                 boardEmbeddings.add(boardEmbedding);
             }
             return boardEmbeddings;
-        }, embedExecutor);
+        }
+//        , embedExecutor
+        );
     }
 
 }

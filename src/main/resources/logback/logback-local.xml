@@ -3,7 +3,7 @@
 
     <!-- 파일 절대경로 ( \ = C:\ ) -->
 <!--    <property name="LOG_DIR" value="\customLog/logback" />-->
-    <property name="LOG_DIR" value="\Users\felix\.Study\Spring_Practice\.log\GbfSearchBack" />
+    <property name="LOG_DIR" value="\Users\felix\.Study\Spring_Practice\.log\GitGallSearchBack" />
 
 
     <!-- CONSOLE 콘솔 로그 -->
