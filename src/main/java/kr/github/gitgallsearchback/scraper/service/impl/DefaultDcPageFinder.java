@@ -52,7 +52,7 @@ public class DefaultDcPageFinder implements DcPageFinder {
                             )
                     ));
             browserPage = browser.newPage();
-            browserPage.setDefaultTimeout(3000);
+            browserPage.setDefaultTimeout(5000);
 
             // 검색 페이지로 이동을 위한 url 설정
             String searchKeyword = "p"; // 글 내부에 p 요소 있으면 전부 검색됨 (div 등으로 확인)

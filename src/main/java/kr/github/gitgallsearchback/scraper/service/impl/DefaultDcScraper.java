@@ -332,11 +332,11 @@ public class DefaultDcScraper implements DcScraper {
 //                break;
 
 //                     컷 카운터로 컷
-//                if (cutCounter >= 10) {
-//                    resultBoards = resultBoards.subList(0, (int) cutCounter);
-//                    break;
-//                }
-//                cutCounter++;
+                if (cutCounter >= 5) {
+                    resultBoards = resultBoards.subList(0, (int) cutCounter);
+                    break;
+                }
+                cutCounter++;
 
                 } // for trElements
 
@@ -481,9 +481,8 @@ public class DefaultDcScraper implements DcScraper {
                         "  elaspedTime = {}h : {}m : {}s : {}millis, \n" +
                         "  time per board = {}s / board, per Page = {}s / page \n" +
                         "  startedFrom = {}, endTime = {}\n" +
-                        "  page = {} ~ {} pageCount = {}, " +
-                        "  expectedBoardCounter = {} \n" +
-                        "  expectedCommentCounter = {} \n" +
+                        "  page = {} ~ {} pageCount = {}\n " +
+                        "  expectedBoardCounter = {} expectedCommentCounter = {} \n" +
                         "  scrapedBoardCounter = {}, scrapedCommentCounter = {}\n" +
                         " ======================================================================",
                 duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart(),

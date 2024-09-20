@@ -120,7 +120,7 @@ public class IndexController {
     public String showDuplicateBoard(Model model) {
         List<Board> duplicateBoard = boardService.findDuplicateBoard();
         DuplicateCountDto duplicateCount = boardService.findDuplicateCount();
-        duplicateBoard.forEach(board  -> log.info("{}", board));
+//        duplicateBoard.forEach(board  -> log.info("{}", board));
         log.info("\n================================================================\n" +
                 "duplicateBoard.size() = {}\n" +
                 "totalCount = {}, distinctCount = {}\n",
@@ -146,7 +146,7 @@ public class IndexController {
     public String showDuplicateComment(Model model) {
         List<Comment> duplicateComments = commentService.findDuplicate();
         DuplicateCountDto duplicateCount = commentService.findDuplicateCount();
-        duplicateComments.forEach(board  -> log.info("{}", board));
+//        duplicateComments.forEach(board  -> log.info("{}", board));
         log.info("\n================================================================\n" +
                         "duplicateComments.size() = {}\n" +
                         "totalCount = {}, distinctCount = {}\n",

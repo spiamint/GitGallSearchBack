@@ -42,6 +42,8 @@ commit 8
     Scraper 및 PageFinder 코드 수정
     스크래핑 재시도 관련 로직 수정
 
+    commit 8.1
+        리드미 작성
 
 
 
