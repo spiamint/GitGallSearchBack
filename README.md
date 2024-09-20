@@ -23,7 +23,7 @@ Playwright 으로 페이지 접속 후 필요한 요소를 찾아 Jsoup 으로 �
 DB 저장시 jdbcTemplate.batchUpdate 를 사용하여 (인터벌 * 100)개의 데이터를 한꺼번에 삽입합니다.<br>
 
 ## 2. 중복관리
-<img src="https://github.com/user-attachments/assets/1e77c3d9-29e7-453c-afc2-bf287a2280f0" width="50%">
+<img src="https://github.com/user-attachments/assets/1e77c3d9-29e7-453c-afc2-bf287a2280f0" width="90%">
 
 페이지 단위로 스크래핑하기 때문에 중복된 글과 댓글을 수집할 수 있습니다.  
 해당 중복 글과 댓글을 임베딩 전에 미리 조회하고 삭제하는 기능입니다.  
