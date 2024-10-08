@@ -19,6 +19,8 @@ public interface DcScraper {
      */
     void setExecutor(Executor executor);
 
+    void setWebDriver(WebDriver driver);
+
 
     /**
      * 스크래핑 옵션을 설정합니다.

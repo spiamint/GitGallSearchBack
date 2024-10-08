@@ -43,7 +43,7 @@ public class EmbeddingService {
     private final DcBoardEmbeddingRepository embeddingRepository;
     private final DcBoardRepository boardRepository;
     private final BulkInsertRepository bulkInsertRepository;
-//    private final @Qualifier("embedExecutor") Executor embedExecutor;
+    private final @Qualifier("embedExecutor") Executor embedExecutor;
 
     /**
      * 페이지 단위 임베딩 실행
@@ -184,7 +184,7 @@ public class EmbeddingService {
 
     /**
      * 실제 임베딩 작업 비동기로 진행 및 INSERT
-     *
+     * EmbeddingModel.call timeout 4min (500 response)
      * @param boards
      * @return
      */
@@ -248,7 +248,7 @@ public class EmbeddingService {
             }
             return boardEmbeddings;
         }
-//        , embedExecutor
+        , embedExecutor
         );
     }
 

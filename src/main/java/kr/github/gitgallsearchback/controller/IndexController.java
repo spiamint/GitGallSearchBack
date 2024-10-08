@@ -4,16 +4,27 @@ import kr.github.gitgallsearchback.controller.form.FindPageForm;
 import kr.github.gitgallsearchback.controller.form.ScrapeStartForm;
 import kr.github.gitgallsearchback.domain.Board;
 import kr.github.gitgallsearchback.domain.Comment;
+import kr.github.gitgallsearchback.mail.EmailDTO;
+import kr.github.gitgallsearchback.mail.EmailSender;
 import kr.github.gitgallsearchback.repository.CommandQueryExecutor;
 import kr.github.gitgallsearchback.repository.dto.DuplicateCountDto;
 import kr.github.gitgallsearchback.scraper.enums.ScrapingOption;
 import kr.github.gitgallsearchback.scraper.service.DcPageFinder;
+import kr.github.gitgallsearchback.scraper.util.WebDriverUtil;
 import kr.github.gitgallsearchback.service.EmbeddingService;
 import kr.github.gitgallsearchback.service.BoardService;
 import kr.github.gitgallsearchback.service.CommentService;
 import kr.github.gitgallsearchback.service.ScrapingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,9 +34,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 @Slf4j

@@ -80,6 +80,9 @@ public class DefaultDcScraper implements DcScraper {
     private String commentListItemSelector = ".cmt_list>li";
     private long maxRetryCount = 5; // 페이지 열기 및 파싱 실패시 최대 재시도 카운트
 
+    public void setWebDriver(WebDriver webDriver) {
+    }
+
     public void setExecutor(Executor executor) {
         if (executor == null) {
             this.executor = ForkJoinPool.commonPool();
@@ -242,6 +245,7 @@ public class DefaultDcScraper implements DcScraper {
                     trElementsReloadCounter++;
                     continue; // 현재 페이지 재시도
                 }
+                trElementsReloadCounter = 0; // 성공시 초기화
 
                 // 글 리스트 에서 글 마다 내용 추출
                 List<String> hrefs = new ArrayList<>(); // 글의 href 저장할 리스트
@@ -332,11 +336,11 @@ public class DefaultDcScraper implements DcScraper {
 //                break;
 
 //                     컷 카운터로 컷
-                if (cutCounter >= 5) {
-                    resultBoards = resultBoards.subList(0, (int) cutCounter);
-                    break;
-                }
-                cutCounter++;
+//                if (cutCounter >= 5) {
+//                    resultBoards = resultBoards.subList(0, (int) cutCounter);
+//                    break;
+//                }
+//                cutCounter++;
 
                 } // for trElements
 

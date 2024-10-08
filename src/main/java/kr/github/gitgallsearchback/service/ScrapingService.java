@@ -7,6 +7,7 @@ import kr.github.gitgallsearchback.domain.mapper.CommentMapper;
 import kr.github.gitgallsearchback.scraper.dto.*;
 import kr.github.gitgallsearchback.scraper.enums.ScrapingOption;
 import kr.github.gitgallsearchback.scraper.service.DcScraper;
+import kr.github.gitgallsearchback.scraper.util.WebDriverUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

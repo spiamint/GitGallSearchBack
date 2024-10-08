@@ -6,6 +6,7 @@ import kr.github.gitgallsearchback.scraper.service.DcPageFinder;
 import kr.github.gitgallsearchback.scraper.service.DcScraper;
 import kr.github.gitgallsearchback.scraper.service.impl.DefaultDcPageFinder;
 import kr.github.gitgallsearchback.scraper.service.impl.DefaultDcScraper;
+import kr.github.gitgallsearchback.scraper.service.test.SeleniumDcScraperArc;
 import kr.github.gitgallsearchback.scraper.service.test.TestDcScraper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -30,7 +31,8 @@ public class DcScraperAutoConfig {
     @Bean
     @ConditionalOnMissingBean(DcScraper.class)
     public DcScraper dcScraper() {
-        return new DefaultDcScraper(boardExtractor(), commentExtractor());
+        return new SeleniumDcScraperArc(boardExtractor(), commentExtractor()) {
+        };
     }
 
     @Bean

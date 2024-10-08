@@ -25,7 +25,7 @@ configurations {
 configurations.all {
     resolutionStrategy.eachDependency { details ->
         if (details.requested.group == 'org.seleniumhq.selenium') {
-            details.useVersion "4.24.0"
+            details.useVersion "4.25.0"
         }
     }
 }
@@ -61,7 +61,8 @@ dependencies {
     implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
     // 셀레니움
-    implementation 'org.seleniumhq.selenium:selenium-java:4.24.0'
+    implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '4.25.0'
+
 
     // playwright
     implementation 'com.microsoft.playwright:playwright:1.47.0'
@@ -74,6 +75,9 @@ dependencies {
 
     // hibernate vector
     implementation 'org.hibernate.orm:hibernate-vector:6.4.0.Final'
+
+    // 메일 보내기
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 }
 

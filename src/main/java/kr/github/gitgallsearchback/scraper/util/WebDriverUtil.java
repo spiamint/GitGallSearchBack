@@ -24,19 +24,13 @@ public class WebDriverUtil {
         // webDriver 옵션 설정
         ChromeOptions chromeOptions = new ChromeOptions();
         chromeOptions.addArguments(
-//                "--headless",
+//                "--headless=new",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
                 "--lang=ko",
                 "--disable-images",
                 "--blink-settings=imagesEnabled=false" // 이미지 제거 옵션 alternative
         );
-
-        // 이미지 제거 옵션 alternative
-//        Map<String, Object> prefs = new HashMap<>();
-//        prefs.put("profile.managed_default_content_settings.images", 2);
-//        chromeOptions.setExperimentalOption("prefs", prefs);
-
         // 페이지 로드 전략 NONE
         chromeOptions.setPageLoadStrategy(PageLoadStrategy.NONE);
 
@@ -53,6 +47,7 @@ public class WebDriverUtil {
 //        driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(5000));
 //        driver.manage().timeouts().scriptTimeout(Duration.ofMillis(5000));
 //        driver.manage().timeouts().implicitlyWait(Duration.ofMillis(2000));
+
 
         return driver;
     }
@@ -117,6 +112,13 @@ public class WebDriverUtil {
                 "--disable-features=OptimizationGuideModelDownloading,OptimizationHintsFetching,OptimizationTargetPrediction,OptimizationHints"
 
         );
+
+
+        // 이미지 제거 옵션 alternative
+//        Map<String, Object> prefs = new HashMap<>();
+//        prefs.put("profile.managed_default_content_settings.images", 2);
+//        chromeOptions.setExperimentalOption("prefs", prefs);
+
         // 페이지 로드 전략 NONE
         options.setPageLoadStrategy(PageLoadStrategy.NONE);
 
